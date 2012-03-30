@@ -1,0 +1,20 @@
+Source: signon-ui
+Section: libs
+Priority: optional
+Maintainer: Ken VanDine <ken.vandine@canonical.com>
+Build-Depends: debhelper (>= 8.0.0),
+               pkg-config,
+               signon-plugins-dev,
+               libaccounts-qt-dev,
+               libnotify-dev,
+               libx11-dev,
+               libsignon-qt-dev,
+               libqtwebkit-dev
+Standards-Version: 3.9.3
+Homepage: https://launchpad.net/opensesame-signon-ui
+
+Package: signon-ui
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Single Sign-on UI
+ UI for the signond Single Signon service

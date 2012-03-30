@@ -1,0 +1,30 @@
+signon-ui (0.3+bzr34-0precise2) precise; urgency=low
+
+  * rebased on trunk
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 30 Mar 2012 12:01:03 -0400
+
+signon-ui (0.3+bzr34-0precise1) precise; urgency=low
+
+  * new snapshot tag 0.3+bzr40
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 29 Mar 2012 14:34:00 -0400
+
+signon-ui (0.2+bzr37-0precise1) precise; urgency=low
+
+  * New snapshot r37
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Mon, 19 Mar 2012 12:27:12 -0400
+
+signon-ui (0.2-0precise2) precise; urgency=low
+
+  * debian/control
+    - added build depends on libx11-dev
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 05 Jan 2012 12:55:17 -0500
+
+signon-ui (0.2-0precise1) precise; urgency=low
+
+  * Initial release 
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 05 Jan 2012 10:32:27 -0500

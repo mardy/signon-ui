@@ -1,3 +1,9 @@
+signon-ui (0.3+bzr43-0precise1) precise; urgency=low
+
+  * new snapshot tag 0.3+bzr43
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 04 Apr 2012 15:03:37 -0400
+
 signon-ui (0.3+bzr34-0precise2) precise; urgency=low
 
   * rebased on trunk

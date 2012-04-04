@@ -121,6 +121,7 @@ public:
 
     QWidget *buildWebViewPage(const QVariantMap &params);
     QWidget *buildSuccessPage();
+    QWidget *buildLoadFailurePage();
     void buildDialog(const QVariantMap &params);
     void start();
 
@@ -134,6 +135,7 @@ private:
     void showDialog();
     void setupViewForUrl(const QUrl &url);
     void notifyAuthCompleted();
+    void notifyLoadFailed();
     QWebElement initializeField(const QString &settingsKey,
                                 const QString &paramKey = QString());
     void initializeFields();
@@ -145,6 +147,7 @@ private:
     QStackedLayout *m_dialogLayout;
     QWidget *m_webViewPage;
     QWidget *m_successPage;
+    QWidget *m_loadFailurePage;
     WebView *m_webView;
     QProgressBar *m_progressBar;
     QUrl finalUrl;
@@ -156,6 +159,7 @@ private:
     QWebElement m_loginButton;
     QString m_username;
     QString m_password;
+    int m_loginCount;
 };
 
 } // namespace
@@ -166,7 +170,8 @@ BrowserRequestPrivate::BrowserRequestPrivate(BrowserRequest *request):
     m_dialog(0),
     m_webView(0),
     m_progressBar(0),
-    m_settings(0)
+    m_settings(0),
+    m_loginCount(0)
 {
 }
 
@@ -199,6 +204,16 @@ void BrowserRequestPrivate::onUrlChanged(const QUrl &url)
 void BrowserRequestPrivate::onLoadFinished(bool ok)
 {
     TRACE() << "Load finished" << ok;
+
+    if (!ok) {
+        notifyLoadFailed();
+        return;
+    }
+
+    if (loggingLevel() > 2) {
+        /* Dump the HTML */
+        TRACE() << m_webView->page()->mainFrame()->toHtml();
+    }
 
     initializeFields();
 
@@ -280,6 +295,21 @@ QWidget *BrowserRequestPrivate::buildSuccessPage()
     return dialogPage;
 }
 
+QWidget *BrowserRequestPrivate::buildLoadFailurePage()
+{
+    QWidget *dialogPage = new QWidget;
+    dialogPage->setSizePolicy(QSizePolicy::Ignored,
+                              QSizePolicy::MinimumExpanding);
+    QVBoxLayout *layout = new QVBoxLayout(dialogPage);
+
+    QLabel *label = new QLabel(_("An error occurred while loading "
+                                 "the authentication page."));
+    label->setAlignment(Qt::AlignCenter);
+    layout->addWidget(label);
+
+    return dialogPage;
+}
+
 void BrowserRequestPrivate::buildDialog(const QVariantMap &params)
 {
     m_dialog = new Dialog;
@@ -304,6 +334,9 @@ void BrowserRequestPrivate::buildDialog(const QVariantMap &params)
     m_successPage = buildSuccessPage();
     m_dialogLayout->addWidget(m_successPage);
 
+    m_loadFailurePage = buildLoadFailurePage();
+    m_dialogLayout->addWidget(m_loadFailurePage);
+
     TRACE() << "Dialog was built";
 }
 
@@ -323,6 +356,8 @@ void BrowserRequestPrivate::onFinished()
     Q_Q(BrowserRequest);
 
     TRACE() << "Browser dialog closed";
+
+    QObject::disconnect(m_webView, 0, this, 0);
 
     QVariantMap reply;
     QUrl url = responseUrl.isEmpty() ? m_webView->url() : responseUrl;
@@ -402,6 +437,12 @@ void BrowserRequestPrivate::notifyAuthCompleted()
     m_dialogLayout->setCurrentWidget(m_successPage);
 }
 
+void BrowserRequestPrivate::notifyLoadFailed()
+{
+    m_dialogLayout->setCurrentWidget(m_loadFailurePage);
+    showDialog();
+}
+
 QWebElement BrowserRequestPrivate::initializeField(const QString &settingsKey,
                                                    const QString &paramKey)
 {
@@ -452,6 +493,11 @@ bool BrowserRequestPrivate::tryAutoLogin()
 
     if (m_passwordField.isNull() ||
         m_passwordField.evaluateJavaScript("this.value").isNull())
+        return false;
+
+    /* Avoid falling in a failed login loop */
+    m_loginCount++;
+    if (m_loginCount > 1)
         return false;
 
     m_loginButton.evaluateJavaScript("this.click()");

@@ -1,3 +1,9 @@
+signon-ui (0.4+bzr46-0precise1) precise; urgency=low
+
+  * new snapshot tag 0.4+bzr46
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 01 Jun 2012 14:43:03 -0400
+
 signon-ui (0.3+bzr43-0precise1) precise; urgency=low
 
   * new snapshot tag 0.3+bzr43

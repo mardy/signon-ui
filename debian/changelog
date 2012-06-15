@@ -1,3 +1,9 @@
+signon-ui (0.4+bzr46-0precise2) precise; urgency=low
+
+  * no change rebuild
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 15 Jun 2012 16:53:26 -0400
+
 signon-ui (0.4+bzr46-0precise1) precise; urgency=low
 
   * new snapshot tag 0.4+bzr46

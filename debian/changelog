@@ -1,3 +1,9 @@
+signon-ui (0.4+bzr46-0quantal1) quantal; urgency=low
+
+  * rebuild for quantal
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Mon, 16 Jul 2012 09:59:56 -0400
+
 signon-ui (0.4+bzr46-0precise2) precise; urgency=low
 
   * no change rebuild

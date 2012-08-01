@@ -1,3 +1,11 @@
+signon-ui (0.4+bzr47-0quantal1) UNRELEASED; urgency=low
+
+  * New snapshot rev 47
+  * common-project-config.pri 
+    - fixed FTBFS by including X11 in pkgconfg
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 01 Aug 2012 16:05:53 -0400
+
 signon-ui (0.4+bzr46-0quantal1) quantal; urgency=low
 
   * rebuild for quantal

@@ -1,7 +1,7 @@
 Source: signon-ui
-Section: libs
+Section: gnome
 Priority: optional
-Maintainer: Ken VanDine <ken.vandine@canonical.com>
+Maintainer: Ubuntu Desktop Team <ubuntu-desktop@lists.ubuntu.com>
 Build-Depends: debhelper (>= 8.0.0),
                pkg-config,
                signon-plugins-dev,
@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 8.0.0),
                libsignon-qt-dev,
                libqtwebkit-dev
 Standards-Version: 3.9.3
-Homepage: https://launchpad.net/opensesame-signon-ui
+Homepage: https://launchpad.net/online-accounts-signon-ui
 
 Package: signon-ui
 Architecture: any

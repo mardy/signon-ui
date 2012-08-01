@@ -1,3 +1,15 @@
+signon-ui (0.4+bzr47-0quantal1) quantal; urgency=low
+
+  * New snapshot rev 47
+  * common-project-config.pri 
+    - fixed FTBFS by including X11 in pkgconfg
+  * tests/test.pro
+    - Only run unit tests
+  * debian/control
+    - added build depends for libxext-dev, gdb, xvfb, dbus-test-runner
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 01 Aug 2012 17:03:13 -0400
+
 signon-ui (0.4+bzr46-0quantal1) quantal; urgency=low
 
   * rebuild for quantal

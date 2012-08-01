@@ -1,4 +1,4 @@
-signon-ui (0.4+bzr47-0quantal1) UNRELEASED; urgency=low
+signon-ui (0.4+bzr47-0quantal1) quantal; urgency=low
 
   * New snapshot rev 47
   * common-project-config.pri 
@@ -8,7 +8,7 @@ signon-ui (0.4+bzr47-0quantal1) UNRELEASED; urgency=low
   * debian/control
     - added build depends for libxext-dev, gdb, xvfb, dbus-test-runner
 
- -- Ken VanDine <ken.vandine@canonical.com>  Wed, 01 Aug 2012 16:49:49 -0400
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 01 Aug 2012 17:03:13 -0400
 
 signon-ui (0.4+bzr46-0quantal1) quantal; urgency=low
 

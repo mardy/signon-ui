@@ -1,0 +1,2 @@
+version=3
+http://launchpad.net/online-accounts-signon-ui/+download .*/signon-ui-([0-9.]+)\.tar\.bz2

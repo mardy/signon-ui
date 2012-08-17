@@ -1,0 +1,64 @@
+------------------------------------------------------------
+revno: 40
+tags: 0.3
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Thu 2012-03-29 11:05:13 +0300
+message:
+  Version 0.3
+------------------------------------------------------------
+revno: 39 [merge]
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Thu 2012-03-29 10:50:56 +0300
+message:
+  Make sure we don't miss any loadFinished signal.
+------------------------------------------------------------
+revno: 38 [merge]
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Wed 2012-03-28 15:04:40 +0300
+message:
+  Add support for translations
+------------------------------------------------------------
+revno: 37 [merge]
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Fri 2012-03-16 18:00:50 +0400
+message:
+  Fix focus issues when embedding.
+  
+  The previous fix was not working.
+------------------------------------------------------------
+revno: 36 [merge]
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Thu 2012-03-15 16:44:39 +0200
+message:
+  If embedded, quit the request as soon as the callback URL is reached.
+------------------------------------------------------------
+revno: 35
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Wed 2012-03-14 14:55:34 +0200
+message:
+  Activate the embedded widget.
+  
+  This fixes the problem where the widget wouldn't get the focus when clicked.
+------------------------------------------------------------
+revno: 34 [merge]
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Wed 2012-03-07 11:25:26 +0200
+message:
+  Add the com.canonical.indicators.webcredentials service
+------------------------------------------------------------
+revno: 33 [merge]
+tags: 0.2-bzr33
+committer: Alberto Mardegan <alberto.mardegan@canonical.com>
+branch nick: trunk
+timestamp: Mon 2012-03-05 09:25:10 +0200
+message:
+  Tests: skip functional tests if a D-Bus session is not available
+------------------------------------------------------------
+Use --include-merged or -n0 to see merged revisions.

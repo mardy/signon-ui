@@ -1,3 +1,9 @@
+signon-ui (0.6-0ubuntu1) quantal; urgency=low
+
+  * New upstream release.
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 17 Aug 2012 16:53:56 -0400
+
 signon-ui (0.5-0ubuntu1) quantal; urgency=low
 
   * New upstream release

@@ -1,3 +1,11 @@
+signon-ui (0.7-0ubuntu1) quantal; urgency=low
+
+  * New upstream release.
+    - protect webkit from untrusted content, only allow https (LP: #1039084)
+  * -debian/patches/unit_tests_only.patch, merged upstream 
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 07 Sep 2012 09:33:56 -0400
+
 signon-ui (0.6-0ubuntu1) quantal; urgency=low
 
   * New upstream release.

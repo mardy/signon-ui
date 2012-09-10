@@ -1,3 +1,12 @@
+signon-ui (0.8-0ubuntu1) quantal; urgency=low
+
+  * New upstream release.
+    - Successfully terminate the browser request as soon as we are requested
+      to load the final URL.  This fixes spawning a bunch of instances of 
+      external browser instances (LP: #1048177) (LP: #1047588)
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Mon, 10 Sep 2012 09:08:27 -0400
+
 signon-ui (0.7-0ubuntu1) quantal; urgency=low
 
   * New upstream release.

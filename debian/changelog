@@ -1,3 +1,10 @@
+signon-ui (0.9-0ubuntu1) quantal; urgency=low
+
+  * New upstream release.
+    - Early terminate successful requests with no UI (LP: #1049207)
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 12 Sep 2012 09:36:58 -0400
+
 signon-ui (0.8-0ubuntu1) quantal; urgency=low
 
   * New upstream release.

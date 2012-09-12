@@ -285,10 +285,10 @@ void BrowserRequestPrivate::onUrlChanged(const QUrl &url)
     if (url.host() == finalUrl.host() &&
         url.path() == finalUrl.path()) {
         responseUrl = url;
-        if (q->embeddedUi()) {
+        if (q->embeddedUi() || !m_dialog->isVisible()) {
             /* Do not show the notification page. */
             m_dialog->accept();
-        } else if (m_dialog->isVisible()) {
+        } else {
             /* Replace the web page with an information screen */
             notifyAuthCompleted();
         }
@@ -610,6 +610,12 @@ void BrowserRequestPrivate::setupViewForUrl(const QUrl &url)
 
 void BrowserRequestPrivate::notifyAuthCompleted()
 {
+    /* Ignore any webview signals from now on.
+     * This is needed because QWebView might still emit loadFinished(false)
+     * (which we would interpret as an error) on the final URL, which we don't
+     * care about anymore. */
+    QObject::disconnect(m_webView, 0, this, 0);
+
     m_dialogLayout->setCurrentWidget(m_successPage);
 }
 

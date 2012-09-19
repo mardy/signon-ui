@@ -21,7 +21,7 @@ QT += \
 PKGCONFIG += \
     accounts-qt \
     signon-plugins-common \
-    libnotify \
+    libproxy-1.0 \
     libsignon-qt
 
 HEADERS = \
@@ -49,6 +49,7 @@ SOURCES = \
     i18n.cpp \
     indicator-service.cpp \
     main.cpp \
+    my-network-proxy-factory.cpp \
     network-access-manager.cpp \
     request.cpp \
     service.cpp \

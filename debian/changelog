@@ -1,11 +1,11 @@
-signon-ui (0.11-0ubuntu1) UNRELEASED; urgency=low
+signon-ui (0.11-0ubuntu1) quantal-proposed; urgency=low
 
   * New upstream release.
     - Do not instantiate invalid QDBusMessages (LP: #1040580)
     - Do not allocate the proxy factory on the 
       stack (LP: #1053444) (LP: #1053454)
 
- -- Ken VanDine <ken.vandine@canonical.com>  Tue, 25 Sep 2012 16:26:38 -0400
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 25 Sep 2012 16:47:07 -0400
 
 signon-ui (0.10-0ubuntu1) quantal; urgency=low
 

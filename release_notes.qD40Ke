@@ -1,0 +1,18 @@
+What is it?
+===========
+SignOnUI is the component responsible for showing the authentication
+dialogs (from simple password queries to websites' login pages) when
+some application requires the user intervention in order to perform a
+login operation.
+Website: https://launchpad.net/online-accounts-signon-ui
+
+
+What is new?
+============
+* Do not instantiate invalid QDBusMessages
+  Fixes: https://launchpad.net/bugs/1040580
+
+* Do not allocate the proxy factory on the stack
+  Fixes: https://launchpad.net/bugs/1053444
+  Fixes: https://launchpad.net/bugs/1053454
+

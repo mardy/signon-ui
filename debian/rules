@@ -3,6 +3,7 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
+export PATH:=/opt/qt5/bin:$(PATH)
 
 override_dh_install:
 	rm -f debian/*/usr/bin/signon-ui-unittest

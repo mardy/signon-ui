@@ -9,12 +9,12 @@ Build-Depends: debhelper (>= 8.0.0),
                libnotify-dev,
                libproxy-dev,
                libx11-dev,
-               libsignon-qt-dev,
-               libqtwebkit-dev,
+               libsignon-qt-dev (>= 8.44-0ubuntu2~build1),
+               qtwebkit,
                libxext-dev,
                gdb,
                xvfb,
-               dbus-test-runner
+               dbus-test-runner,
 Standards-Version: 3.9.3
 Homepage: https://launchpad.net/online-accounts-signon-ui
 

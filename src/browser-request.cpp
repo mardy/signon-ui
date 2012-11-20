@@ -29,6 +29,7 @@
 #include <QDBusArgument>
 #include <QDesktopServices>
 #include <QLabel>
+#include <QNetworkCookie>
 #include <QNetworkRequest>
 #include <QProgressBar>
 #include <QPushButton>
@@ -56,6 +57,7 @@ static const QString keyPasswordField = QString("PasswordField");
 static const QString keyLoginButton = QString("LoginButton");
 static const QString keyInternalLinksPattern = QString("InternalLinksPattern");
 static const QString keyExternalLinksPattern = QString("ExternalLinksPattern");
+static const QString keyAllowedUrls = QString("AllowedUrls");
 
 /* Additional session-data keys we support. */
 static const QString keyCookies = QString("Cookies");
@@ -83,6 +85,11 @@ public:
 
     void setAllowedSchemes(const QStringList &schemes) {
         m_allowedSchemes = schemes;
+    }
+
+    void setAllowedUrls(const QString &pattern) {
+        m_allowedUrls =
+            QRegExp(pattern, Qt::CaseInsensitive, QRegExp::RegExp2);
     }
 
     void setFinalUrl(const QUrl &url) { m_finalUrl = url; }
@@ -135,12 +142,19 @@ private:
     QRegExp m_externalLinksPattern;
     QRegExp m_internalLinksPattern;
     QStringList m_allowedSchemes;
+    QRegExp m_allowedUrls;
     QUrl m_finalUrl;
 };
 
 bool WebPage::urlIsBlocked(QUrl url) const {
     if (!m_allowedSchemes.contains(url.scheme())) {
         TRACE() << "Scheme not allowed:" << url.scheme();
+        return true;
+    }
+
+    if (!m_allowedUrls.isEmpty() &&
+        !m_allowedUrls.exactMatch(url.toString())) {
+        TRACE() << "URL not allowed:" << url;
         return true;
     }
 
@@ -401,10 +415,7 @@ QWidget *BrowserRequestPrivate::buildWebViewPage(const QVariantMap &params)
                      this, SLOT(onUrlChanged(const QUrl&)));
 
     /* set a per-identity cookie jar on the page */
-    uint identity = 0;
-    if (params.contains(SSOUI_KEY_IDENTITY)) {
-        identity = params.value(SSOUI_KEY_IDENTITY).toUInt();
-    }
+    uint identity = q->identity();
     CookieJarManager *cookieJarManager = CookieJarManager::instance();
     CookieJar *cookieJar = cookieJarManager->cookieJarForIdentity(identity);
     addBrowserCookies(cookieJar);
@@ -606,6 +617,7 @@ void BrowserRequestPrivate::setupViewForUrl(const QUrl &url)
                                   toString());
     page->setInternalLinksPattern(m_settings->value(keyInternalLinksPattern).
                                   toString());
+    page->setAllowedUrls(m_settings->value(keyAllowedUrls).toString());
 }
 
 void BrowserRequestPrivate::notifyAuthCompleted()

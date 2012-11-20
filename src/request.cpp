@@ -18,11 +18,15 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define HAS_XEMBED (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 #include "request.h"
 
 #include "browser-request.h"
 #include "debug.h"
 #include "dialog-request.h"
+#if HAS_XEMBED
+#include "embed-manager.h"
+#endif
 #include "errors.h"
 #include "indicator-service.h"
 #ifndef UNIT_TESTS
@@ -36,11 +40,11 @@
 #include <QApplication>
 #include <QDBusArgument>
 #include <QVBoxLayout>
-#include <QX11EmbedWidget>
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 #include <QX11Info>
+#endif
 #include <SignOn/uisessiondata.h>
 #include <SignOn/uisessiondata_priv.h>
-#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 
 using namespace SignOnUi;
@@ -69,7 +73,9 @@ public:
     }
 
 private Q_SLOTS:
+#if HAS_XEMBED
     void onEmbedError();
+#endif
     void onIndicatorCallFinished(QDBusPendingCallWatcher *watcher);
 
 private:
@@ -91,49 +97,6 @@ private:
 
 } // namespace
 
-/* Workaround for https://bugreports.qt-project.org/browse/QTBUG-3617
- * Send XEMBED_REQUEST_FOCUS manually.
- */
-#define XEMBED_REQUEST_FOCUS 3
-
-// Sends an XEmbed message.
-static void sendXEmbedMessage(WId window, Display *display, long message,
-                  long detail = 0, long data1 = 0, long data2 = 0)
-{
-    XClientMessageEvent c;
-    memset(&c, 0, sizeof(c));
-    c.type = ClientMessage;
-    c.message_type = XInternAtom(display, "_XEMBED", false);
-    c.format = 32;
-    c.display = display;
-    c.window = window;
-
-    c.data.l[0] = QX11Info::appTime();
-    c.data.l[1] = message;
-    c.data.l[2] = detail;
-    c.data.l[3] = data1;
-    c.data.l[4] = data2;
-
-    XSendEvent(display, window, false, NoEventMask, (XEvent *) &c);
-}
-
-static bool x11EventFilter(void *message, long *)
-{
-    XEvent *event = reinterpret_cast<XEvent*>(message);
-    if (event->type == ButtonPress)
-    {
-        QWidget *w = QWidget::find(event->xbutton.window);
-        if (w && w->window()->objectName() == "request-widget") {
-            QX11EmbedWidget *embed = static_cast<QX11EmbedWidget*>(w->window());
-            QApplication::setActiveWindow(w->window());
-            sendXEmbedMessage(embed->containerWinId(),
-                              w->x11Info().display(),
-                              XEMBED_REQUEST_FOCUS);
-        }
-    }
-    return false;
-}
-
 RequestPrivate::RequestPrivate(const QDBusConnection &connection,
                                const QDBusMessage &message,
                                const QVariantMap &parameters,
@@ -147,13 +110,6 @@ RequestPrivate::RequestPrivate(const QDBusConnection &connection,
     m_accountManager(0),
     m_widget(0)
 {
-    static bool filterInstalled = false;
-
-    if (!filterInstalled) {
-        QCoreApplication::instance()->setEventFilter(x11EventFilter);
-        filterInstalled = true;
-    }
-
     if (parameters.contains(SSOUI_KEY_CLIENT_DATA)) {
         QVariant variant = parameters[SSOUI_KEY_CLIENT_DATA];
         m_clientData = (variant.type() == QVariant::Map) ?
@@ -175,24 +131,26 @@ void RequestPrivate::setWidget(QWidget *widget)
 
     m_widget = widget;
 
+#if HAS_XEMBED
     if (embeddedUi() && windowId() != 0) {
         TRACE() << "Requesting widget embedding";
-        QX11EmbedWidget *embed = new QX11EmbedWidget;
+        QX11EmbedWidget *embed =
+            EmbedManager::instance()->widgetFor(windowId());
         QObject::connect(embed, SIGNAL(error(QX11EmbedWidget::Error)),
-                         this, SLOT(onEmbedError()));
+                         this, SLOT(onEmbedError()),
+                         Qt::UniqueConnection);
         QObject::connect(embed, SIGNAL(containerClosed()),
                          widget, SLOT(close()));
-        QObject::connect(embed, SIGNAL(containerClosed()),
-                         embed, SLOT(deleteLater()));
-        embed->embedInto(windowId());
         QVBoxLayout *layout = new QVBoxLayout;
         layout->addWidget(widget);
-        embed->setObjectName("request-widget");
         widget->show();
+        /* Delete any previous layout */
+        delete embed->layout();
         embed->setLayout(layout);
         embed->show();
         return;
     }
+#endif
 
     /* If the window has no parent and the webcredentials indicator service is
      * up, dispatch the request to it. */
@@ -202,14 +160,17 @@ void RequestPrivate::setWidget(QWidget *widget)
 
     widget->setWindowModality(Qt::WindowModal);
     widget->show();
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     if (windowId() != 0) {
         TRACE() << "Setting" << widget->effectiveWinId() << "transient for" << windowId();
         XSetTransientForHint(QX11Info::display(),
                              widget->effectiveWinId(),
                              windowId());
     }
+#endif
 }
 
+#if HAS_XEMBED
 void RequestPrivate::onEmbedError()
 {
     Q_Q(Request);
@@ -220,6 +181,7 @@ void RequestPrivate::onEmbedError()
     q->fail(SIGNON_UI_ERROR_EMBEDDING_FAILED,
             QString("Embedding signon UI failed: %1").arg(embed->error()));
 }
+#endif
 
 Accounts::Account *RequestPrivate::findAccount()
 {
@@ -253,6 +215,8 @@ Accounts::Account *RequestPrivate::findAccount()
 
 bool RequestPrivate::dispatchToIndicator()
 {
+    Q_Q(Request);
+
     Accounts::Account *account = findAccount();
     if (account == 0) {
         return false;
@@ -260,6 +224,10 @@ bool RequestPrivate::dispatchToIndicator()
 
     QVariantMap notification;
     notification["DisplayName"] = account->displayName();
+    notification["ClientData"] = m_clientData;
+    notification["Identity"] = q->identity();
+    notification["Method"] = q->method();
+    notification["Mechanism"] = q->mechanism();
 
     indicators::webcredentials *webcredentialsIf =
         new indicators::webcredentials(WEBCREDENTIALS_BUS_NAME,
@@ -352,6 +320,27 @@ void Request::setWidget(QWidget *widget)
 {
     Q_D(Request);
     d->setWidget(widget);
+}
+
+uint Request::identity() const
+{
+    Q_D(const Request);
+
+    return d->m_parameters.value(SSOUI_KEY_IDENTITY).toUInt();
+}
+
+QString Request::method() const
+{
+    Q_D(const Request);
+
+    return d->m_parameters.value(SSOUI_KEY_METHOD).toString();
+}
+
+QString Request::mechanism() const
+{
+    Q_D(const Request);
+
+    return d->m_parameters.value(SSOUI_KEY_MECHANISM).toString();
 }
 
 WId Request::windowId() const

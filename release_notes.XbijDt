@@ -1,0 +1,18 @@
+What is it?
+===========
+SignOnUI is the component responsible for showing the authentication
+dialogs (from simple password queries to websites' login pages) when
+some application requires the user intervention in order to perform a
+login operation.
+Website: https://launchpad.net/signon-ui
+
+
+What is new?
+============
+* Allow building with Qt5
+* New ReauthenticateAccount D-Bus API
+  This method will allow reauthenticating an account by replaying the
+  authentication session which caused the failure.
+* Allow fine grained control over which URLs are allowed
+  Fixes: https://launchpad.net/bugs/1074733
+

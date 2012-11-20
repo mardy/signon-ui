@@ -1,3 +1,10 @@
+signon-ui (0.12-0ubuntu1~build2) quantal; urgency=low
+
+  * debian/control
+    - updated build depends to handle armel/armhf and gles2
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 20 Nov 2012 15:31:34 -0500
+
 signon-ui (0.12-0ubuntu1~build1) quantal; urgency=low
 
   * New upstream release.

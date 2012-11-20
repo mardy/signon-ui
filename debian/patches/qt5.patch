@@ -1,0 +1,1260 @@
+=== modified file 'src/browser-request.cpp'
+--- old/src/browser-request.cpp	2012-09-12 10:19:48 +0000
++++ new/src/browser-request.cpp	2012-11-20 17:02:10 +0000
+@@ -29,6 +29,7 @@
+ #include <QDBusArgument>
+ #include <QDesktopServices>
+ #include <QLabel>
++#include <QNetworkCookie>
+ #include <QNetworkRequest>
+ #include <QProgressBar>
+ #include <QPushButton>
+@@ -56,6 +57,7 @@
+ static const QString keyLoginButton = QString("LoginButton");
+ static const QString keyInternalLinksPattern = QString("InternalLinksPattern");
+ static const QString keyExternalLinksPattern = QString("ExternalLinksPattern");
++static const QString keyAllowedUrls = QString("AllowedUrls");
+ 
+ /* Additional session-data keys we support. */
+ static const QString keyCookies = QString("Cookies");
+@@ -85,6 +87,11 @@
+         m_allowedSchemes = schemes;
+     }
+ 
++    void setAllowedUrls(const QString &pattern) {
++        m_allowedUrls =
++            QRegExp(pattern, Qt::CaseInsensitive, QRegExp::RegExp2);
++    }
++
+     void setFinalUrl(const QUrl &url) { m_finalUrl = url; }
+ 
+ protected:
+@@ -135,6 +142,7 @@
+     QRegExp m_externalLinksPattern;
+     QRegExp m_internalLinksPattern;
+     QStringList m_allowedSchemes;
++    QRegExp m_allowedUrls;
+     QUrl m_finalUrl;
+ };
+ 
+@@ -144,6 +152,12 @@
+         return true;
+     }
+ 
++    if (!m_allowedUrls.isEmpty() &&
++        !m_allowedUrls.exactMatch(url.toString())) {
++        TRACE() << "URL not allowed:" << url;
++        return true;
++    }
++
+     QString urlText = url.toString(QUrl::RemoveScheme |
+                                    QUrl::RemoveUserInfo |
+                                    QUrl::RemoveFragment |
+@@ -401,10 +415,7 @@
+                      this, SLOT(onUrlChanged(const QUrl&)));
+ 
+     /* set a per-identity cookie jar on the page */
+-    uint identity = 0;
+-    if (params.contains(SSOUI_KEY_IDENTITY)) {
+-        identity = params.value(SSOUI_KEY_IDENTITY).toUInt();
+-    }
++    uint identity = q->identity();
+     CookieJarManager *cookieJarManager = CookieJarManager::instance();
+     CookieJar *cookieJar = cookieJarManager->cookieJarForIdentity(identity);
+     addBrowserCookies(cookieJar);
+@@ -606,6 +617,7 @@
+                                   toString());
+     page->setInternalLinksPattern(m_settings->value(keyInternalLinksPattern).
+                                   toString());
++    page->setAllowedUrls(m_settings->value(keyAllowedUrls).toString());
+ }
+ 
+ void BrowserRequestPrivate::notifyAuthCompleted()
+
+=== modified file 'src/com.canonical.indicators.webcredentials.xml'
+--- old/src/com.canonical.indicators.webcredentials.xml	2012-07-26 11:29:35 +0000
++++ new/src/com.canonical.indicators.webcredentials.xml	2012-11-20 17:02:10 +0000
+@@ -43,6 +43,24 @@
+   </method>
+ 
+   <!--
++    ReauthenticateAccount:
++    @account-id: the libaccounts ID of the account.
++    @extra-parameters: dictionary of extra parameters (typically used to
++    specify a XWindowID).
++    @reauthenticated: %TRUE if the account could be reauthenticated and the
++    failure status has been cleared, %FALSE otherwise.
++
++    Tries to replay the failed authentications on the account. If all of them
++    succeed, then the account failure is cleared.
++  -->
++  <method name="ReauthenticateAccount">
++    <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="QVariantMap"/>
++    <arg name="account_id" type="u" direction="in"/>
++    <arg name="extra_parameters" type="a{sv}" direction="in"/>
++    <arg name="reauthenticated" type="b" direction="out"/>
++  </method>
++
++  <!--
+     ClearErrorStatus:
+ 
+     Unsets the error indicator (if any) from the system user menu.
+
+=== modified file 'src/cookie-jar-manager.cpp'
+--- old/src/cookie-jar-manager.cpp	2012-07-26 10:38:55 +0000
++++ new/src/cookie-jar-manager.cpp	2012-11-20 17:02:10 +0000
+@@ -18,6 +18,8 @@
+  * with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
++#define QT_DISABLE_DEPRECATED_BEFORE QT_VERSION_CHECK(4, 0, 0)
++
+ #include "cookie-jar-manager.h"
+ 
+ #include "debug.h"
+@@ -29,6 +31,7 @@
+ #include <QDir>
+ #include <QFile>
+ #include <QHash>
++#include <QNetworkCookie>
+ 
+ using namespace SignOnUi;
+ 
+
+=== modified file 'src/dialog-request.cpp'
+--- old/src/dialog-request.cpp	2012-04-04 12:20:25 +0000
++++ new/src/dialog-request.cpp	2012-11-20 17:02:10 +0000
+@@ -164,7 +164,9 @@
+         m_wUsername = new QLineEdit;
+         m_wUsername->setObjectName("UsernameField");
+         m_wUsername->setEnabled(m_queryUsername);
++#ifndef QT_NO_ACCESSIBILITY
+         m_wUsername->setAccessibleName("username");
++#endif
+         m_wUsername->setText(params.value(SSOUI_KEY_USERNAME).toString());
+         formLayout->addRow(_("Username:"), m_wUsername);
+     }
+
+=== added file 'src/embed-manager.cpp'
+--- old/src/embed-manager.cpp	1970-01-01 00:00:00 +0000
++++ new/src/embed-manager.cpp	2012-11-20 17:02:10 +0000
+@@ -0,0 +1,135 @@
++/*
++ * This file is part of signon-ui
++ *
++ * Copyright (C) 2012 Canonical Ltd.
++ *
++ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 3, as published
++ * by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranties of
++ * MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
++ * PURPOSE.  See the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "debug.h"
++#include "embed-manager.h"
++
++#include <QApplication>
++#include <QX11Info>
++#include <X11/Xatom.h>
++#include <X11/Xlib.h>
++
++using namespace SignOnUi;
++
++static EmbedManager *staticInstance = 0;
++
++namespace SignOnUi {
++
++class EmbedManagerPrivate
++{
++public:
++    EmbedManagerPrivate();
++    ~EmbedManagerPrivate();
++
++private:
++    friend class EmbedManager;
++    QMap<WId,QX11EmbedWidget*> m_embedWidgets;
++};
++
++} // namespace
++
++/* Workaround for https://bugreports.qt-project.org/browse/QTBUG-3617
++ * Send XEMBED_REQUEST_FOCUS manually.
++ */
++#define XEMBED_REQUEST_FOCUS 3
++
++// Sends an XEmbed message.
++static void sendXEmbedMessage(WId window, Display *display, long message,
++                  long detail = 0, long data1 = 0, long data2 = 0)
++{
++    XClientMessageEvent c;
++    memset(&c, 0, sizeof(c));
++    c.type = ClientMessage;
++    c.message_type = XInternAtom(display, "_XEMBED", false);
++    c.format = 32;
++    c.display = display;
++    c.window = window;
++
++    c.data.l[0] = QX11Info::appTime();
++    c.data.l[1] = message;
++    c.data.l[2] = detail;
++    c.data.l[3] = data1;
++    c.data.l[4] = data2;
++
++    XSendEvent(display, window, false, NoEventMask, (XEvent *) &c);
++}
++
++static bool x11EventFilter(void *message, long *)
++{
++    XEvent *event = reinterpret_cast<XEvent*>(message);
++    if (event->type == ButtonPress)
++    {
++        QWidget *w = QWidget::find(event->xbutton.window);
++        if (w && w->window()->objectName() == "request-widget") {
++            QX11EmbedWidget *embed = static_cast<QX11EmbedWidget*>(w->window());
++            QApplication::setActiveWindow(w->window());
++            sendXEmbedMessage(embed->containerWinId(),
++                              w->x11Info().display(),
++                              XEMBED_REQUEST_FOCUS);
++        }
++    }
++    return false;
++}
++
++EmbedManagerPrivate::EmbedManagerPrivate()
++{
++}
++
++EmbedManagerPrivate::~EmbedManagerPrivate()
++{
++}
++
++EmbedManager *EmbedManager::instance()
++{
++    if (staticInstance == 0) {
++        staticInstance = new EmbedManager();
++    }
++
++    return staticInstance;
++}
++
++EmbedManager::EmbedManager(QObject *parent):
++    QObject(parent),
++    d_ptr(new EmbedManagerPrivate)
++{
++    QCoreApplication::instance()->setEventFilter(x11EventFilter);
++}
++
++EmbedManager::~EmbedManager()
++{
++    delete d_ptr;
++}
++
++QX11EmbedWidget *EmbedManager::widgetFor(WId windowId)
++{
++    Q_D(EmbedManager);
++
++    if (!d->m_embedWidgets.contains(windowId)) {
++        /* Create a new embed widget */
++        QX11EmbedWidget *embed = new QX11EmbedWidget;
++        QObject::connect(embed, SIGNAL(containerClosed()),
++                         embed, SLOT(deleteLater()));
++        embed->embedInto(windowId);
++        embed->setObjectName("request-widget");
++        d->m_embedWidgets[windowId] = embed;
++    }
++
++    return d->m_embedWidgets[windowId];
++}
+
+=== added file 'src/embed-manager.h'
+--- old/src/embed-manager.h	1970-01-01 00:00:00 +0000
++++ new/src/embed-manager.h	2012-11-20 17:02:10 +0000
+@@ -0,0 +1,52 @@
++/*
++ * This file is part of signon-ui
++ *
++ * Copyright (C) 2012 Canonical Ltd.
++ *
++ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 3, as published
++ * by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranties of
++ * MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
++ * PURPOSE.  See the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#ifndef SIGNON_UI_EMBED_H
++#define SIGNON_UI_EMBED_H
++
++#include <QObject>
++#include <QX11EmbedWidget>
++
++namespace SignOnUi {
++
++class EmbedManagerPrivate;
++
++class EmbedManager: public QObject
++{
++    Q_OBJECT
++
++public:
++    static EmbedManager *instance();
++    ~EmbedManager();
++
++    QX11EmbedWidget *widgetFor(WId windowId);
++
++public:
++    EmbedManager(QObject *parent = 0);
++
++private:
++    EmbedManagerPrivate *d_ptr;
++    Q_DECLARE_PRIVATE(EmbedManager)
++};
++
++} // namespace
++
++#endif // SIGNON_UI_EMBED_H
++
+
+=== modified file 'src/indicator-service.cpp'
+--- old/src/indicator-service.cpp	2012-09-14 07:14:43 +0000
++++ new/src/indicator-service.cpp	2012-11-20 17:02:10 +0000
+@@ -22,8 +22,11 @@
+ 
+ #include "debug.h"
+ #include "i18n.h"
++#include "reauthenticator.h"
+ #include "webcredentials_adaptor.h"
+ 
++#include <QDBusContext>
++
+ using namespace SignOnUi;
+ 
+ QDBusArgument &operator<<(QDBusArgument &argument, const QSet<uint> &set)
+@@ -53,7 +56,7 @@
+ 
+ static IndicatorService *m_instance = 0;
+ 
+-class IndicatorServicePrivate: public QObject
++class IndicatorServicePrivate: public QObject, QDBusContext
+ {
+     Q_OBJECT
+     Q_DECLARE_PUBLIC(IndicatorService)
+@@ -72,15 +75,23 @@
+     void ClearErrorStatus();
+     void RemoveFailures(const QSet<uint> &accountIds);
+     void ReportFailure(uint accountId, const QVariantMap &notification);
++    bool ReauthenticateAccount(uint accountId,
++                               const QVariantMap &extraParameters);
+ 
+ private:
+     void setErrorStatus();
+     void notifyPropertyChanged(const char *propertyName);
+ 
++private Q_SLOTS:
++    void onReauthenticatorFinished(bool success);
++
+ private:
+     mutable IndicatorService *q_ptr;
+     WebcredentialsAdaptor *m_adaptor;
+     QSet<uint> m_failures;
++    QMap<uint, QList<AuthData> > m_failureClientData;
++    QMap<uint, Reauthenticator*> m_reauthenticators;
++    QDBusMessage m_clientMessage;
+     bool m_errorStatus;
+ };
+ 
+@@ -112,14 +123,71 @@
+ void IndicatorServicePrivate::ReportFailure(uint accountId,
+                                             const QVariantMap &notification)
+ {
+-    Q_UNUSED(notification);
+-
+     m_failures.insert(accountId);
++
++    /* If the original client data is provided, we remember it: it can
++     * be used to replay the authentication later.
++     */
++    if (notification.contains("ClientData")) {
++        /* If the key is not found, the QMap's [] operator inserts an empty
++         * element in the map and return a reference to it. So the following
++         * line of code returns a valid QList even if the account never failed
++         * before.
++         */
++        QList<AuthData> &failedAuthentications =
++            m_failureClientData[accountId];
++
++        AuthData authData;
++        authData.sessionData = notification["ClientData"].toMap();
++        authData.identity = quint32(notification["Identity"].toUInt());
++        authData.method = notification["Method"].toString();
++        authData.mechanism = notification["Mechanism"].toString();
++        failedAuthentications.append(authData);
++    }
++
+     notifyPropertyChanged("Failures");
+ 
+     setErrorStatus();
+ }
+ 
++bool IndicatorServicePrivate::ReauthenticateAccount(uint accountId,
++                                   const QVariantMap &extraParameters)
++{
++    if (!m_failureClientData.contains(accountId)) {
++        /* Nothing we can do about this account */
++        TRACE() << "No reauthentication data for account" << accountId;
++        return false;
++    }
++
++    if (m_reauthenticators.contains(accountId)) {
++        /* A reauthenticator for this account is already at work. This
++         * shouldn't happen in a real world scenario. */
++        qWarning() << "Reauthenticator already active on" << accountId;
++        return false;
++    }
++
++    TRACE() << "Reauthenticating account" << accountId;
++
++    /* If we need to reauthenticate, we are delivering the result
++     * after iterating the event loop, so we must inform QtDBus that
++     * it shouldn't use this method's return value as a result.
++     */
++    setDelayedReply(true);
++    m_clientMessage = message();
++    QList<AuthData> &failedAuthentications = m_failureClientData[accountId];
++
++    Reauthenticator *reauthenticator =
++        new Reauthenticator(failedAuthentications, extraParameters, this);
++    m_reauthenticators[accountId] = reauthenticator;
++
++    QObject::connect(reauthenticator, SIGNAL(finished(bool)),
++                     this, SLOT(onReauthenticatorFinished(bool)),
++                     Qt::QueuedConnection);
++    reauthenticator->start();
++
++    return true; // ignored, see setDelayedReply() above.
++}
++
+ void IndicatorServicePrivate::setErrorStatus()
+ {
+     /* Don't show more than one notification, until the error status is
+@@ -145,6 +213,43 @@
+     QDBusConnection::sessionBus().send(signal);
+ }
+ 
++void IndicatorServicePrivate::onReauthenticatorFinished(bool success)
++{
++    Reauthenticator *reauthenticator =
++        qobject_cast<Reauthenticator*>(sender());
++
++    /* Find the account; searching a map by value is inefficient, but
++     * in this case it's extremely likely that the map contains just
++     * one element. :-) */
++    uint accountId = 0;
++    QMap<uint,Reauthenticator*>::const_iterator i;
++    for (i = m_reauthenticators.constBegin();
++         i != m_reauthenticators.constEnd();
++         i++) {
++        if (i.value() == reauthenticator) {
++            accountId = i.key();
++            break;
++        }
++    }
++    Q_ASSERT (accountId != 0);
++
++    QDBusMessage reply = m_clientMessage.createReply(success);
++    QDBusConnection::sessionBus().send(reply);
++
++    if (success) {
++        m_failureClientData.remove(accountId);
++        m_failures.remove(accountId);
++        notifyPropertyChanged("Failures");
++
++        if (m_failures.isEmpty()) {
++            ClearErrorStatus();
++        }
++    }
++
++    m_reauthenticators.remove(accountId);
++    reauthenticator->deleteLater();
++}
++
+ IndicatorService::IndicatorService(QObject *parent):
+     QObject(parent),
+     d_ptr(new IndicatorServicePrivate(this))
+
+=== added file 'src/reauthenticator.cpp'
+--- old/src/reauthenticator.cpp	1970-01-01 00:00:00 +0000
++++ new/src/reauthenticator.cpp	2012-11-20 17:02:10 +0000
+@@ -0,0 +1,158 @@
++/*
++ * This file is part of signon-ui
++ *
++ * Copyright (C) 2012 Canonical Ltd.
++ *
++ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 3, as published
++ * by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranties of
++ * MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
++ * PURPOSE.  See the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "reauthenticator.h"
++
++#include "debug.h"
++
++#include <SignOn/AuthSession>
++#include <SignOn/Identity>
++
++using namespace SignOnUi;
++using namespace SignOn;
++
++namespace SignOnUi {
++
++class ReauthenticatorPrivate: public QObject
++{
++    Q_OBJECT
++    Q_DECLARE_PUBLIC(Reauthenticator)
++
++public:
++    ReauthenticatorPrivate(const QList<AuthData> &clientData,
++                           const QVariantMap &extraParameters,
++                           Reauthenticator *reauthenticator);
++    ~ReauthenticatorPrivate();
++
++    void start();
++
++private:
++    void checkFinished();
++
++private Q_SLOTS:
++    void onError(const SignOn::Error &error);
++    void onResponse(const SignOn::SessionData &response);
++
++private:
++    mutable Reauthenticator *q_ptr;
++    QList<AuthData> m_clientData;
++    QVariantMap m_extraParameters;
++    int m_errorCount;
++    int m_responseCount;
++};
++
++} // namespace
++
++ReauthenticatorPrivate::ReauthenticatorPrivate(
++    const QList<AuthData> &clientData,
++    const QVariantMap &extraParameters,
++    Reauthenticator *request):
++    QObject(request),
++    q_ptr(request),
++    m_clientData(clientData),
++    m_extraParameters(extraParameters),
++    m_errorCount(0),
++    m_responseCount(0)
++{
++}
++
++ReauthenticatorPrivate::~ReauthenticatorPrivate()
++{
++}
++
++void ReauthenticatorPrivate::start()
++{
++    foreach (const AuthData &authData, m_clientData) {
++        Identity *identity =
++            Identity::existingIdentity(authData.identity, this);
++        if (identity == 0) { m_errorCount++; continue; }
++
++        AuthSession *authSession = identity->createSession(authData.method);
++        if (authSession == 0) { m_errorCount++; continue; }
++
++        QObject::connect(authSession,
++                         SIGNAL(error(const SignOn::Error &)),
++                         this,
++                         SLOT(onError(const SignOn::Error &)));
++        QObject::connect(authSession,
++                         SIGNAL(response(const SignOn::SessionData &)),
++                         this,
++                         SLOT(onResponse(const SignOn::SessionData &)));
++
++        /* Prepare the session data, adding the extra parameters. */
++        QVariantMap sessionData = authData.sessionData;
++        QVariantMap::const_iterator i;
++        for (i = m_extraParameters.constBegin();
++             i != m_extraParameters.constEnd();
++             i++) {
++            sessionData[i.key()] = i.value();
++        }
++
++        /* Start the session right now; signon-ui is queueing them anyway. */
++        authSession->process(sessionData, authData.mechanism);
++    }
++
++    checkFinished();
++}
++
++void ReauthenticatorPrivate::checkFinished()
++{
++    Q_Q(Reauthenticator);
++
++    if (m_errorCount + m_responseCount < m_clientData.count()) return;
++    Q_EMIT q->finished(m_errorCount == 0);
++}
++
++void ReauthenticatorPrivate::onError(const SignOn::Error &error)
++{
++    TRACE() << "Got error:" << error.message();
++
++    m_errorCount++;
++    checkFinished();
++}
++
++void ReauthenticatorPrivate::onResponse(
++                                    const SignOn::SessionData &response)
++{
++    TRACE() << "Got response:" << response.toMap();
++
++    m_responseCount++;
++    checkFinished();
++}
++
++Reauthenticator::Reauthenticator(const QList<AuthData> &clientData,
++                                 const QVariantMap &extraParameters,
++                                 QObject *parent):
++    QObject(parent),
++    d_ptr(new ReauthenticatorPrivate(clientData, extraParameters, this))
++{
++}
++
++Reauthenticator::~Reauthenticator()
++{
++}
++
++void Reauthenticator::start()
++{
++    Q_D(Reauthenticator);
++    d->start();
++}
++
++#include "reauthenticator.moc"
+
+=== added file 'src/reauthenticator.h'
+--- old/src/reauthenticator.h	1970-01-01 00:00:00 +0000
++++ new/src/reauthenticator.h	2012-11-20 17:02:10 +0000
+@@ -0,0 +1,62 @@
++/*
++ * This file is part of signon-ui
++ *
++ * Copyright (C) 2012 Canonical Ltd.
++ *
++ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 3, as published
++ * by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranties of
++ * MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
++ * PURPOSE.  See the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#ifndef SIGNON_UI_REAUTHENTICATOR_H
++#define SIGNON_UI_REAUTHENTICATOR_H
++
++#include <QList>
++#include <QObject>
++#include <QVariantMap>
++
++namespace SignOnUi {
++
++struct AuthData {
++    quint32 identity;
++    QString method;
++    QString mechanism;
++    QVariantMap sessionData;
++};
++
++class ReauthenticatorPrivate;
++class Reauthenticator: public QObject
++{
++    Q_OBJECT
++
++public:
++    Reauthenticator(const QList<AuthData> &clientData,
++                    const QVariantMap &extraParameters,
++                    QObject *parent = 0);
++    ~Reauthenticator();
++
++public Q_SLOTS:
++    void start();
++
++Q_SIGNALS:
++    void finished(bool success);
++
++private:
++    ReauthenticatorPrivate *d_ptr;
++    Q_DECLARE_PRIVATE(Reauthenticator)
++};
++
++} // namespace
++
++#endif // SIGNON_UI_REAUTHENTICATOR_H
++
+
+=== modified file 'src/request.cpp'
+--- old/src/request.cpp	2012-09-24 13:26:14 +0000
++++ new/src/request.cpp	2012-11-20 17:02:10 +0000
+@@ -18,11 +18,15 @@
+  * with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
++#define HAS_XEMBED (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+ #include "request.h"
+ 
+ #include "browser-request.h"
+ #include "debug.h"
+ #include "dialog-request.h"
++#if HAS_XEMBED
++#include "embed-manager.h"
++#endif
+ #include "errors.h"
+ #include "indicator-service.h"
+ #ifndef UNIT_TESTS
+@@ -36,11 +40,11 @@
+ #include <QApplication>
+ #include <QDBusArgument>
+ #include <QVBoxLayout>
+-#include <QX11EmbedWidget>
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+ #include <QX11Info>
++#endif
+ #include <SignOn/uisessiondata.h>
+ #include <SignOn/uisessiondata_priv.h>
+-#include <X11/Xatom.h>
+ #include <X11/Xlib.h>
+ 
+ using namespace SignOnUi;
+@@ -69,7 +73,9 @@
+     }
+ 
+ private Q_SLOTS:
++#if HAS_XEMBED
+     void onEmbedError();
++#endif
+     void onIndicatorCallFinished(QDBusPendingCallWatcher *watcher);
+ 
+ private:
+@@ -91,49 +97,6 @@
+ 
+ } // namespace
+ 
+-/* Workaround for https://bugreports.qt-project.org/browse/QTBUG-3617
+- * Send XEMBED_REQUEST_FOCUS manually.
+- */
+-#define XEMBED_REQUEST_FOCUS 3
+-
+-// Sends an XEmbed message.
+-static void sendXEmbedMessage(WId window, Display *display, long message,
+-                  long detail = 0, long data1 = 0, long data2 = 0)
+-{
+-    XClientMessageEvent c;
+-    memset(&c, 0, sizeof(c));
+-    c.type = ClientMessage;
+-    c.message_type = XInternAtom(display, "_XEMBED", false);
+-    c.format = 32;
+-    c.display = display;
+-    c.window = window;
+-
+-    c.data.l[0] = QX11Info::appTime();
+-    c.data.l[1] = message;
+-    c.data.l[2] = detail;
+-    c.data.l[3] = data1;
+-    c.data.l[4] = data2;
+-
+-    XSendEvent(display, window, false, NoEventMask, (XEvent *) &c);
+-}
+-
+-static bool x11EventFilter(void *message, long *)
+-{
+-    XEvent *event = reinterpret_cast<XEvent*>(message);
+-    if (event->type == ButtonPress)
+-    {
+-        QWidget *w = QWidget::find(event->xbutton.window);
+-        if (w && w->window()->objectName() == "request-widget") {
+-            QX11EmbedWidget *embed = static_cast<QX11EmbedWidget*>(w->window());
+-            QApplication::setActiveWindow(w->window());
+-            sendXEmbedMessage(embed->containerWinId(),
+-                              w->x11Info().display(),
+-                              XEMBED_REQUEST_FOCUS);
+-        }
+-    }
+-    return false;
+-}
+-
+ RequestPrivate::RequestPrivate(const QDBusConnection &connection,
+                                const QDBusMessage &message,
+                                const QVariantMap &parameters,
+@@ -147,13 +110,6 @@
+     m_accountManager(0),
+     m_widget(0)
+ {
+-    static bool filterInstalled = false;
+-
+-    if (!filterInstalled) {
+-        QCoreApplication::instance()->setEventFilter(x11EventFilter);
+-        filterInstalled = true;
+-    }
+-
+     if (parameters.contains(SSOUI_KEY_CLIENT_DATA)) {
+         QVariant variant = parameters[SSOUI_KEY_CLIENT_DATA];
+         m_clientData = (variant.type() == QVariant::Map) ?
+@@ -175,24 +131,26 @@
+ 
+     m_widget = widget;
+ 
++#if HAS_XEMBED
+     if (embeddedUi() && windowId() != 0) {
+         TRACE() << "Requesting widget embedding";
+-        QX11EmbedWidget *embed = new QX11EmbedWidget;
++        QX11EmbedWidget *embed =
++            EmbedManager::instance()->widgetFor(windowId());
+         QObject::connect(embed, SIGNAL(error(QX11EmbedWidget::Error)),
+-                         this, SLOT(onEmbedError()));
++                         this, SLOT(onEmbedError()),
++                         Qt::UniqueConnection);
+         QObject::connect(embed, SIGNAL(containerClosed()),
+                          widget, SLOT(close()));
+-        QObject::connect(embed, SIGNAL(containerClosed()),
+-                         embed, SLOT(deleteLater()));
+-        embed->embedInto(windowId());
+         QVBoxLayout *layout = new QVBoxLayout;
+         layout->addWidget(widget);
+-        embed->setObjectName("request-widget");
+         widget->show();
++        /* Delete any previous layout */
++        delete embed->layout();
+         embed->setLayout(layout);
+         embed->show();
+         return;
+     }
++#endif
+ 
+     /* If the window has no parent and the webcredentials indicator service is
+      * up, dispatch the request to it. */
+@@ -202,14 +160,17 @@
+ 
+     widget->setWindowModality(Qt::WindowModal);
+     widget->show();
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+     if (windowId() != 0) {
+         TRACE() << "Setting" << widget->effectiveWinId() << "transient for" << windowId();
+         XSetTransientForHint(QX11Info::display(),
+                              widget->effectiveWinId(),
+                              windowId());
+     }
++#endif
+ }
+ 
++#if HAS_XEMBED
+ void RequestPrivate::onEmbedError()
+ {
+     Q_Q(Request);
+@@ -220,6 +181,7 @@
+     q->fail(SIGNON_UI_ERROR_EMBEDDING_FAILED,
+             QString("Embedding signon UI failed: %1").arg(embed->error()));
+ }
++#endif
+ 
+ Accounts::Account *RequestPrivate::findAccount()
+ {
+@@ -253,6 +215,8 @@
+ 
+ bool RequestPrivate::dispatchToIndicator()
+ {
++    Q_Q(Request);
++
+     Accounts::Account *account = findAccount();
+     if (account == 0) {
+         return false;
+@@ -260,6 +224,10 @@
+ 
+     QVariantMap notification;
+     notification["DisplayName"] = account->displayName();
++    notification["ClientData"] = m_clientData;
++    notification["Identity"] = q->identity();
++    notification["Method"] = q->method();
++    notification["Mechanism"] = q->mechanism();
+ 
+     indicators::webcredentials *webcredentialsIf =
+         new indicators::webcredentials(WEBCREDENTIALS_BUS_NAME,
+@@ -354,6 +322,27 @@
+     d->setWidget(widget);
+ }
+ 
++uint Request::identity() const
++{
++    Q_D(const Request);
++
++    return d->m_parameters.value(SSOUI_KEY_IDENTITY).toUInt();
++}
++
++QString Request::method() const
++{
++    Q_D(const Request);
++
++    return d->m_parameters.value(SSOUI_KEY_METHOD).toString();
++}
++
++QString Request::mechanism() const
++{
++    Q_D(const Request);
++
++    return d->m_parameters.value(SSOUI_KEY_MECHANISM).toString();
++}
++
+ WId Request::windowId() const
+ {
+     Q_D(const Request);
+
+=== modified file 'src/request.h'
+--- old/src/request.h	2012-03-01 15:00:10 +0000
++++ new/src/request.h	2012-11-20 17:02:10 +0000
+@@ -45,6 +45,9 @@
+     static QString id(const QVariantMap &parameters);
+     QString id() const;
+ 
++    uint identity() const;
++    QString method() const;
++    QString mechanism() const;
+     WId windowId() const;
+     bool embeddedUi() const;
+ 
+
+=== modified file 'src/signonui_dbus_adaptor.pri'
+--- old/src/signonui_dbus_adaptor.pri	2012-03-06 12:41:37 +0000
++++ new/src/signonui_dbus_adaptor.pri	2012-11-20 17:02:10 +0000
+@@ -21,7 +21,7 @@
+ signonui_dbus_adaptor_header.commands = $$QMAKE_QDBUSXML2CPP -a ${QMAKE_FILE_OUT}: ${QMAKE_FILE_IN}
+ signonui_dbus_adaptor_header.output_function = signonui_dbus_adaptor_header_output
+ signonui_dbus_adaptor_header.name = DBUSXML2CPP ADAPTOR HEADER ${QMAKE_FILE_IN}
+-signonui_dbus_adaptor_header.variable_out = DBUS_ADAPTOR_HEADERS
++signonui_dbus_adaptor_header.variable_out = SIGNONUI_DBUS_ADAPTOR_HEADERS
+ signonui_dbus_adaptor_header.input = SIGNONUI_DBUS_ADAPTOR_LIST
+ 
+ defineReplace(signonui_dbus_adaptor_header_output) {
+
+=== modified file 'src/src.pro'
+--- old/src/src.pro	2012-09-17 09:01:01 +0000
++++ new/src/src.pro	2012-11-20 17:02:10 +0000
+@@ -35,6 +35,7 @@
+     i18n.h \
+     indicator-service.h \
+     network-access-manager.h \
++    reauthenticator.h \
+     request.h \
+     service.h \
+     webcredentials_interface.h
+@@ -51,10 +52,16 @@
+     main.cpp \
+     my-network-proxy-factory.cpp \
+     network-access-manager.cpp \
++    reauthenticator.cpp \
+     request.cpp \
+     service.cpp \
+     webcredentials_interface.cpp
+ 
++lessThan(QT_MAJOR_VERSION, 5) {
++    HEADERS += embed-manager.h
++    SOURCES += embed-manager.cpp
++}
++
+ DEFINES += \
+     DEBUG_ENABLED \
+     I18N_DOMAIN=\\\"$${I18N_DOMAIN}\\\"
+
+=== added file 'tests/unit/fake-libsignon.cpp'
+--- old/tests/unit/fake-libsignon.cpp	1970-01-01 00:00:00 +0000
++++ new/tests/unit/fake-libsignon.cpp	2012-11-20 17:02:10 +0000
+@@ -0,0 +1,120 @@
++/*
++ * This file is part of signon-ui
++ *
++ * Copyright (C) 2012 Canonical Ltd.
++ *
++ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 3, as published
++ * by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranties of
++ * MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
++ * PURPOSE.  See the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <QDebug>
++#include <QTimer>
++#include <SignOn/AuthSession>
++#include <SignOn/Identity>
++
++using namespace SignOn;
++
++namespace SignOn {
++
++class IdentityImpl {
++    AuthSessionP createSession(const QString &method);
++    friend class Identity;
++    Identity *q;
++    quint32 id;
++};
++
++class AuthSessionImpl: public QObject
++{
++    Q_OBJECT
++
++private Q_SLOTS:
++    void emitResponse();
++
++private:
++    friend class AuthSession;
++    AuthSession *q;
++    quint32 id;
++    QString method;
++    SessionData sessionData;
++};
++
++} // namespace
++
++AuthSessionP IdentityImpl::createSession(const QString &method)
++{
++    /* pretend to fail creating a few authsessions */
++    if (id % 5 == 0) return 0;
++
++    return new AuthSession(id, method, q);
++}
++
++Identity::Identity(quint32 id, QObject *parent):
++    QObject(parent),
++    impl(new IdentityImpl)
++{
++    impl->id = id;
++    impl->q = this;
++}
++
++Identity::~Identity()
++{
++    delete impl;
++}
++
++Identity *Identity::existingIdentity(quint32 id, QObject *parent)
++{
++    /* Pretend not to find a few identities */
++    if (id % 3 == 0) return 0;
++
++    return new Identity(id, parent);
++}
++
++AuthSessionP Identity::createSession(const QString &method)
++{
++    return impl->createSession(method);
++}
++
++void AuthSessionImpl::emitResponse()
++{
++    Q_EMIT q->response(sessionData);
++}
++
++AuthSession::AuthSession(quint32 id, const QString &method,
++                         QObject *parent):
++    QObject(parent),
++    impl(new AuthSessionImpl)
++{
++    qDebug() << "Created fake Authsession" << id << method;
++    impl->q = this;
++    impl->id = id;
++    impl->method = method;
++}
++
++AuthSession::~AuthSession()
++{
++    delete impl;
++}
++
++void AuthSession::process(const SessionData &sessionData,
++                          const QString &mechanism)
++{
++    QVariantMap map = sessionData.toMap();
++    map["TheMechanism"] = mechanism;
++    impl->sessionData = SessionData(map);
++    /* delay the response with some pseudo-random wait */
++    int msec = 100 + (impl->id % 4) * 5;
++    QTimer::singleShot(msec, impl, SLOT(emitResponse()));
++}
++
++#include "fake-libsignon.moc"
+
+=== modified file 'tests/unit/test.cpp'
+--- old/tests/unit/test.cpp	2012-09-14 07:14:43 +0000
++++ new/tests/unit/test.cpp	2012-11-20 17:02:10 +0000
+@@ -22,6 +22,7 @@
+ #include "fake-libnotify.h"
+ #include "indicator-service.h"
+ #include "test.h"
++#include "reauthenticator.h"
+ #include "request.h"
+ #include "fake-webcredentials-interface.h"
+ 
+@@ -143,6 +144,72 @@
+     delete manager;
+ }
+ 
++static void prepareAuthData(AuthData &authData, int identity)
++{
++    QVariantMap sessionData;
++    sessionData["Int"] = identity;
++
++    authData.identity = identity;
++    authData.sessionData = sessionData;
++    authData.method = QString::fromLatin1("method%1").arg(identity);
++    authData.mechanism = QString::fromLatin1("mechanism%1").arg(identity);
++}
++
++void SignOnUiTest::testReauthenticator()
++{
++    QList<AuthData> failuresData;
++
++    for (int i = 1; i < 8; i++) {
++        AuthData authData;
++        prepareAuthData(authData, i);
++
++        failuresData.append(authData);
++    }
++
++    QVariantMap extraParameters;
++    extraParameters["Greeting"] = QString::fromLatin1("Hello!");
++
++    Reauthenticator *reauthenticator =
++        new Reauthenticator(failuresData, extraParameters);
++    QSignalSpy finished(reauthenticator, SIGNAL(finished(bool)));
++    reauthenticator->start();
++
++    QTest::qWait(200);
++
++    QCOMPARE(finished.count(), 1);
++    QList<QVariant> arguments = finished.takeFirst(); // first signal
++
++    /* The reauthentication failed because of some invalid identities
++     * created by the fake libsignon.*/
++    QCOMPARE(arguments.at(0).toBool(), false);
++
++    delete reauthenticator;
++
++    /* Now create the AuthData for the identities which are known to work */
++    failuresData.clear();
++    AuthData authData;
++    prepareAuthData(authData, 1);
++    failuresData.append(authData);
++    prepareAuthData(authData, 2);
++    failuresData.append(authData);
++    prepareAuthData(authData, 4);
++    failuresData.append(authData);
++
++    reauthenticator =
++        new Reauthenticator(failuresData, extraParameters);
++    QSignalSpy finished2(reauthenticator, SIGNAL(finished(bool)));
++    reauthenticator->start();
++
++    QTest::qWait(200);
++
++    QCOMPARE(finished2.count(), 1);
++    arguments = finished2.takeFirst(); // first signal
++
++    QCOMPARE(arguments.at(0).toBool(), true);
++
++    delete reauthenticator;
++}
++
+ void SignOnUiTest::testIndicatorService()
+ {
+     const uint firstFailure = 413;
+
+=== modified file 'tests/unit/test.h'
+--- old/tests/unit/test.h	2012-03-06 13:54:30 +0000
++++ new/tests/unit/test.h	2012-11-20 17:02:10 +0000
+@@ -37,6 +37,7 @@
+     void testRequestObjects();
+     void testRequestWithIndicator();
+ 
++    void testReauthenticator();
+     void testIndicatorService();
+ 
+ private:
+
+=== modified file 'tests/unit/unit.pro'
+--- old/tests/unit/unit.pro	2012-08-01 20:49:24 +0000
++++ new/tests/unit/unit.pro	2012-11-20 17:02:10 +0000
+@@ -25,6 +25,7 @@
+ 
+ SOURCES += \
+     fake-libnotify.cpp \
++    fake-libsignon.cpp \
+     fake-webcredentials-interface.cpp \
+     test.cpp \
+     $$TOP_SRC_DIR/src/animation-label.cpp \
+@@ -36,6 +37,7 @@
+     $$TOP_SRC_DIR/src/i18n.cpp \
+     $$TOP_SRC_DIR/src/indicator-service.cpp \
+     $$TOP_SRC_DIR/src/network-access-manager.cpp \
++    $$TOP_SRC_DIR/src/reauthenticator.cpp \
+     $$TOP_SRC_DIR/src/request.cpp \
+     $$TOP_SRC_DIR/src/webcredentials_adaptor.cpp
+ HEADERS += \
+@@ -50,8 +52,15 @@
+     $$TOP_SRC_DIR/src/dialog.h \
+     $$TOP_SRC_DIR/src/indicator-service.h \
+     $$TOP_SRC_DIR/src/network-access-manager.h \
++    $$TOP_SRC_DIR/src/reauthenticator.h \
+     $$TOP_SRC_DIR/src/request.h \
+     $$TOP_SRC_DIR/src/webcredentials_adaptor.h
++
++lessThan(QT_MAJOR_VERSION, 5) {
++    SOURCES += $$TOP_SRC_DIR/src/embed-manager.cpp
++    HEADERS += $$TOP_SRC_DIR/src/embed-manager.h
++}
++
+ INCLUDEPATH += \
+     . \
+     $$TOP_SRC_DIR/src
+

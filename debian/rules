@@ -4,6 +4,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 export PATH:=/opt/qt5/bin:$(PATH)
+export PKG_CONFIG_PATH=/opt/qt5/lib/pkgconfig
+
+override_dh_auto_configure:
+	qmake LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH) "QMAKE_CXXFLAGS=$(CFLAGS)" signon-ui.pro
 
 override_dh_install:
 	rm -f debian/*/usr/bin/signon-ui-unittest

@@ -35,6 +35,7 @@ HEADERS = \
     i18n.h \
     indicator-service.h \
     network-access-manager.h \
+    reauthenticator.h \
     request.h \
     service.h \
     webcredentials_interface.h
@@ -51,9 +52,15 @@ SOURCES = \
     main.cpp \
     my-network-proxy-factory.cpp \
     network-access-manager.cpp \
+    reauthenticator.cpp \
     request.cpp \
     service.cpp \
     webcredentials_interface.cpp
+
+lessThan(QT_MAJOR_VERSION, 5) {
+    HEADERS += embed-manager.h
+    SOURCES += embed-manager.cpp
+}
 
 DEFINES += \
     DEBUG_ENABLED \

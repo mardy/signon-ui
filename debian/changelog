@@ -1,4 +1,4 @@
-signon-ui (0.12-0ubuntu1~build1) UNRELEASED; urgency=low
+signon-ui (0.12-0ubuntu1~build1) quantal; urgency=low
 
   * New upstream release.
   * debian/rules
@@ -7,6 +7,8 @@ signon-ui (0.12-0ubuntu1~build1) UNRELEASED; urgency=low
     - build depend on qtwebkit instead of libqtwebkit-dev 
     - bump build dep for libsignon-qt-dev and libaccounts-qt-dev
       to get Qt5 builds
+  * debian/patches/po_makefile.patch
+    - Add missing Makefile that dropped between 0.11 and 0.12
 
  -- Ken VanDine <ken.vandine@canonical.com>  Tue, 20 Nov 2012 14:09:22 -0500
 

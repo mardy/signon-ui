@@ -13,5 +13,7 @@ override_dh_install:
 	rm -f debian/*/usr/bin/signon-ui-unittest
 	dh_install --fail-missing
 
+override_dh_auto_test:
+
 %:
 	dh $@ 

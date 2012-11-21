@@ -1,3 +1,11 @@
+signon-ui (0.12-0ubuntu1~build3) quantal; urgency=low
+
+  * debian/rules
+    - disable tests until we can figure out why we are getting timeouts
+      on armhf
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 21 Nov 2012 09:49:29 -0500
+
 signon-ui (0.12-0ubuntu1~build2) quantal; urgency=low
 
   * debian/control

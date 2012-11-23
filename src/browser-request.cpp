@@ -68,7 +68,10 @@ class WebPage: public QWebPage
     Q_OBJECT
 
 public:
-    WebPage(QObject *parent = 0): QWebPage(parent) {}
+    WebPage(QObject *parent = 0): QWebPage(parent) {
+        QObject::connect(this, SIGNAL(windowCloseRequested()),
+                         this, SLOT(onClose()));
+    }
     ~WebPage() {}
 
     void setUserAgent(const QString &userAgent) { m_userAgent = userAgent; }
@@ -131,8 +134,30 @@ protected:
         return true;
     }
 
+    QWebPage *createWindow(WebWindowType type)
+    {
+        TRACE() << "Asked to create window for type" << type;
+        WebPage *child = new WebPage(this);
+        child->setAllowedSchemes(m_allowedSchemes);
+        QWebView *v = qobject_cast<QWebView*>(view());
+        if (v != 0) v->setPage(child);
+        return child;
+    }
+
 Q_SIGNALS:
     void finalUrlReached(const QUrl &url);
+
+private Q_SLOTS:
+    void onClose()
+    {
+        TRACE() << "close";
+        WebPage *p = qobject_cast<WebPage*>(parent());
+        QWebView *v = qobject_cast<QWebView*>(view());
+        TRACE() << "Parent:" << p << "View:" << v;
+        if (p != 0 && v != 0) {
+            v->setPage(p);
+        }
+    }
 
 private:
     bool urlIsBlocked(QUrl url) const;

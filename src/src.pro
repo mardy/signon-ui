@@ -16,6 +16,7 @@ QT += \
     dbus \
     gui \
     network \
+    quick \
     webkit
 
 PKGCONFIG += \
@@ -29,7 +30,6 @@ HEADERS = \
     browser-request.h \
     cookie-jar-manager.h \
     debug.h \
-    dialog-request.h \
     dialog.h \
     errors.h \
     i18n.h \
@@ -45,7 +45,6 @@ SOURCES = \
     browser-request.cpp \
     cookie-jar-manager.cpp \
     debug.cpp \
-    dialog-request.cpp \
     dialog.cpp \
     i18n.cpp \
     indicator-service.cpp \
@@ -87,3 +86,9 @@ service.files = \
     com.canonical.indicators.webcredentials.service \
     com.nokia.singlesignonui.service
 INSTALLS += service
+
+OTHER_FILES += \
+    webview.qml
+
+RESOURCES += \
+    qml.qrc

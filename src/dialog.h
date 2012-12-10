@@ -21,22 +21,30 @@
 #ifndef SIGNON_UI_DIALOG_H
 #define SIGNON_UI_DIALOG_H
 
-#include <QDialog>
 #include <QObject>
+#include <QQuickView>
 
 namespace SignOnUi {
 
-class Dialog: public QDialog
+class Dialog: public QQuickView
 {
     Q_OBJECT
 
 public:
-    explicit Dialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    enum DialogCode {
+        Rejected = 0,
+        Accepted,
+    };
+    explicit Dialog(QWindow *parent = 0);
     ~Dialog();
 
-protected:
-    // reimplemented virtual methods
-    void closeEvent(QCloseEvent *e);
+public Q_SLOTS:
+    void accept();
+    void reject();
+    void done(int result);
+
+Q_SIGNALS:
+    void finished(int result);
 };
 
 } // namespace

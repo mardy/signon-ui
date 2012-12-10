@@ -24,18 +24,29 @@
 
 using namespace SignOnUi;
 
-Dialog::Dialog(QWidget *parent, Qt::WindowFlags f):
-    QDialog(parent, f)
+Dialog::Dialog(QWindow *parent):
+    QQuickView(parent)
 {
+    setResizeMode(QQuickView::SizeRootObjectToView);
+    setWindowState(Qt::WindowFullScreen);
 }
 
 Dialog::~Dialog()
 {
 }
 
-void Dialog::closeEvent(QCloseEvent *e)
+void Dialog::accept()
 {
-    reject();
-    QDialog::closeEvent(e);
+    done(Dialog::Accepted);
 }
 
+void Dialog::reject()
+{
+    done(Dialog::Rejected);
+}
+
+void Dialog::done(int result)
+{
+    setVisible(false);
+    Q_EMIT finished(result);
+}

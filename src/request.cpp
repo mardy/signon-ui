@@ -23,7 +23,6 @@
 
 #include "browser-request.h"
 #include "debug.h"
-#include "dialog-request.h"
 #if HAS_XEMBED
 #include "embed-manager.h"
 #endif
@@ -288,7 +287,8 @@ Request *Request::newRequest(const QDBusConnection &connection,
     if (parameters.contains(SSOUI_KEY_OPENURL)) {
         return new BrowserRequest(connection, message, parameters, parent);
     } else {
-        return new DialogRequest(connection, message, parameters, parent);
+        qWarning() << "Unsupported request";
+        return 0;
     }
 }
 

@@ -1,0 +1,18 @@
+=== modified file 'src/src.pro'
+--- old/src/src.pro	2013-01-23 07:48:35 +0000
++++ new/src/src.pro	2013-01-23 19:58:55 +0000
+@@ -19,11 +19,11 @@
+     webkit
+ 
+ PKGCONFIG += \
+-    accounts-qt \
++    accounts-qt5 \
+     signon-plugins-common \
+     libnotify \
+     libproxy-1.0 \
+-    libsignon-qt
++    libsignon-qt5
+ 
+ HEADERS = \
+     animation-label.h \
+

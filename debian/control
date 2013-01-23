@@ -2,28 +2,28 @@ Source: signon-ui
 Section: gnome
 Priority: optional
 Maintainer: Ubuntu Desktop Team <ubuntu-desktop@lists.ubuntu.com>
-Build-Depends: dbus-test-runner,
-               debhelper (>= 9),
-               gdb,
-               libaccounts-qt-dev,
-               libnotify-dev,
-               libproxy-dev,
-               libqtwebkit-dev,
-               libsignon-qt-dev,
-               libx11-dev,
-               libxext-dev,
+Build-Depends: debhelper (>= 9),
                pkg-config,
                signon-plugins-dev,
+               libaccounts-qt5-dev,
+               libnotify-dev,
+               libproxy-dev,
+               libx11-dev,
+               libsignon-qt5-dev,
+               qt5-default,
+               qtbase5-dev,
+               libqt5webkit5-dev,
+               libgl1-mesa-dev [!armel !armhf] | libgl-dev [!armel !armhf],
+               libgles2-mesa-dev [armel armhf] | libgles2-dev [armel armhf],
+               libxext-dev,
+               gdb,
                xvfb,
+               dbus-test-runner,
 Standards-Version: 3.9.3
-Homepage: https://launchpad.net/signon-ui
-# If you aren't a member of ~online-accounts but need to upload packaging changes,
-# just go ahead.  ~online-accounts will notice and sync up the code again.
-Vcs-Bzr: https://code.launchpad.net/~online-accounts/signon-ui/trunk
+Homepage: https://launchpad.net/online-accounts-signon-ui
 
 Package: signon-ui
 Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Single Sign-on UI
  UI for the signond Single Signon service

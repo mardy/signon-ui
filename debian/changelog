@@ -1,8 +1,14 @@
-signon-ui (0.13-0ubuntu1) UNRELEASED; urgency=low
+signon-ui (0.13-0ubuntu2~quantal1) quantal; urgency=low
 
+  [ Robert Bruce Park ]
   * Automatic snapshot from revision 71 (bootstrap)
 
- -- Robert Bruce Park <robert.park@canonical.com>  Thu, 10 Jan 2013 11:21:01 -0800
+  [ Ken VanDine ]
+  * build for quantal
+  * debian/patches/qt5.patch
+    - check for accounts-qt5 and signon-qt5
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 23 Jan 2013 15:02:12 -0500
 
 signon-ui (0.12bzr13.01.09-0ubuntu1) raring; urgency=low
 

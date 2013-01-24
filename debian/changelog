@@ -1,3 +1,23 @@
+signon-ui (0.13-0ubuntu2~quantal3) quantal; urgency=low
+
+  * src/src.pro, tests/unit/unit.pro
+    - Add widgets and webkitwidgets to config
+  * tests/unit/unit.pro
+    - check for accounts-qt5 and signon-qt5
+  * debian/control
+    - build depend on qtdeclarative5-dev, libsqlite3-dev,
+      libgstreamer-plugins-base0.10-dev, libxslt1-dev,
+      and libqt5opengl5-dev
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 24 Jan 2013 08:58:00 -0500
+
+signon-ui (0.13-0ubuntu2~quantal2) quantal; urgency=low
+
+  * src/src.pro
+    - check for accounts-qt5 and signon-qt5
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 23 Jan 2013 16:47:36 -0500
+
 signon-ui (0.13-0ubuntu2~quantal1) quantal; urgency=low
 
   [ Robert Bruce Park ]

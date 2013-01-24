@@ -14,14 +14,16 @@ QT += \
     core \
     dbus \
     gui \
+    widgets \
     network \
-    webkit
+    webkitwidgets \
+    webkit 
 
 PKGCONFIG += \
-    accounts-qt \
+    accounts-qt5 \
     signon-plugins-common \
     libnotify \
-    libsignon-qt
+    libsignon-qt5
 
 SOURCES += \
     fake-libnotify.cpp \

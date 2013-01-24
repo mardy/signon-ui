@@ -13,12 +13,17 @@ Build-Depends: debhelper (>= 9),
                qt5-default,
                qtbase5-dev,
                libqt5webkit5-dev,
+               qtdeclarative5-dev,
                libgl1-mesa-dev [!armel !armhf] | libgl-dev [!armel !armhf],
                libgles2-mesa-dev [armel armhf] | libgles2-dev [armel armhf],
                libxext-dev,
                gdb,
                xvfb,
                dbus-test-runner,
+               libsqlite3-dev,
+               libgstreamer-plugins-base0.10-dev,
+               libxslt1-dev,
+               libqt5opengl5-dev,
 Standards-Version: 3.9.3
 Homepage: https://launchpad.net/online-accounts-signon-ui
 

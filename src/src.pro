@@ -15,15 +15,17 @@ QT += \
     core \
     dbus \
     gui \
+    widgets \
     network \
+    webkitwidgets \
     webkit
 
 PKGCONFIG += \
-    accounts-qt \
+    accounts-qt5 \
     signon-plugins-common \
     libnotify \
     libproxy-1.0 \
-    libsignon-qt
+    libsignon-qt5
 
 HEADERS = \
     animation-label.h \

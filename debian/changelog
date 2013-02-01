@@ -1,3 +1,11 @@
+signon-ui (0.13-0ubuntu2~quantal5) quantal; urgency=low
+
+  * debian/control
+    - build depend on qtsensors5-dev and qtlocation5-dev (something else 
+      really depend on these, we don't directly)
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 01 Feb 2013 15:34:18 -0500
+
 signon-ui (0.13-0ubuntu2~quantal4) quantal; urgency=low
 
   * Default daemonTimeout to 30, which can be overridden with 

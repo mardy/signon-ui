@@ -1,3 +1,10 @@
+signon-ui (0.13-0ubuntu2~quantal4) quantal; urgency=low
+
+  * Default daemonTimeout to 30, which can be overridden with 
+    SSOUI_DAEMON_TIMEOUT (LP: #1112680)
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 01 Feb 2013 12:16:41 -0500
+
 signon-ui (0.13-0ubuntu2~quantal3) quantal; urgency=low
 
   * src/src.pro, tests/unit/unit.pro

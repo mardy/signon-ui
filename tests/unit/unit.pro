@@ -16,6 +16,7 @@ QT += \
     gui \
     widgets \
     network \
+    quick \
     webkitwidgets \
     webkit 
 
@@ -34,7 +35,6 @@ SOURCES += \
     $$TOP_SRC_DIR/src/browser-request.cpp \
     $$TOP_SRC_DIR/src/cookie-jar-manager.cpp \
     $$TOP_SRC_DIR/src/debug.cpp \
-    $$TOP_SRC_DIR/src/dialog-request.cpp \
     $$TOP_SRC_DIR/src/dialog.cpp \
     $$TOP_SRC_DIR/src/i18n.cpp \
     $$TOP_SRC_DIR/src/indicator-service.cpp \
@@ -50,7 +50,6 @@ HEADERS += \
     $$TOP_SRC_DIR/src/browser-request.h \
     $$TOP_SRC_DIR/src/debug.h \
     $$TOP_SRC_DIR/src/cookie-jar-manager.h \
-    $$TOP_SRC_DIR/src/dialog-request.h \
     $$TOP_SRC_DIR/src/dialog.h \
     $$TOP_SRC_DIR/src/indicator-service.h \
     $$TOP_SRC_DIR/src/network-access-manager.h \

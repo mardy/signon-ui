@@ -141,7 +141,7 @@ void DialogRequestPrivate::buildDialog(const QVariantMap &params)
 
     QString title = params.value(SSOUI_KEY_TITLE,
                                  _("Enter your credentials")).toString();
-    m_dialog->setWindowTitle(title);
+    m_dialog->setTitle(title);
 
     QFormLayout *formLayout = new QFormLayout(m_dialog);
 

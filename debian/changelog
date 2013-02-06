@@ -1,3 +1,11 @@
+signon-ui (0.13-0ubuntu2~quantal6~build1) UNRELEASED; urgency=low
+
+  * Build fixes for Qt5
+  * debian/rules
+    - disable tests
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 06 Feb 2013 10:02:05 -0500
+
 signon-ui (0.13-0ubuntu2~quantal5) quantal; urgency=low
 
   * debian/control

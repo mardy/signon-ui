@@ -334,7 +334,7 @@ void BrowserRequestPrivate::buildDialog(const QVariantMap &params)
         title = _("Web authentication");
     }
 
-    m_dialog->setWindowTitle(title);
+    m_dialog->setTitle(title);
 
     TRACE() << "Dialog was built";
 }

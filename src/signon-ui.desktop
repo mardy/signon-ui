@@ -7,4 +7,5 @@ Exec=/usr/bin/signon-ui
 Icon=
 Type=Application
 Terminal=false
+NoDisplay=true
 X-Ubuntu-Gettext-Domain=signon-ui

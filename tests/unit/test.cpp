@@ -65,6 +65,7 @@ void SignOnUiTest::testRequestObjects()
     parameters[SSOUI_KEY_TITLE] = title;
     parameters[SSOUI_KEY_QUERYPASSWORD] = true;
     parameters[SSOUI_KEY_CLIENT_DATA] = clientData;
+    parameters[SSOUI_KEY_OPENURL] = "http://localhost:9999/page404.html";
 
     Request *request = Request::newRequest(m_dbusConnection,
                                            m_dbusMessage,
@@ -78,18 +79,6 @@ void SignOnUiTest::testRequestObjects()
     QCOMPARE(request->parameters(), parameters);
     QCOMPARE(request->clientData(), clientData);
     QCOMPARE(request->isInProgress(), false);
-    /* make sure that the request is of type DialogRequest */
-    QCOMPARE(request->metaObject()->className(), "SignOnUi::DialogRequest");
-    delete request;
-
-    /* Now slightly modify the request parameters, so that a BrowserRequest
-     * will be created instead */
-    parameters[SSOUI_KEY_OPENURL] = "http://localhost:9999/page404.html";
-    request = Request::newRequest(m_dbusConnection,
-                                  m_dbusMessage,
-                                  parameters,
-                                  this);
-    QVERIFY(request != 0);
     QCOMPARE(request->metaObject()->className(), "SignOnUi::BrowserRequest");
     delete request;
 }
@@ -120,6 +109,7 @@ void SignOnUiTest::testRequestWithIndicator()
     QVariantMap parameters;
     parameters[SSOUI_KEY_QUERYPASSWORD] = true;
     parameters[SSOUI_KEY_IDENTITY] = signonId;
+    parameters[SSOUI_KEY_OPENURL] = "http://localhost:9999/page404.html";
 
     Request *request = Request::newRequest(m_dbusConnection,
                                            m_dbusMessage,

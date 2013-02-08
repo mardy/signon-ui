@@ -79,6 +79,7 @@ contains(DEFINES, USE_UBUNTU_PLATFORM_API) {
 }
 
 RESOURCES += $$TOP_SRC_DIR/src/animationlabel.qrc
+RESOURCES += $$TOP_SRC_DIR/src/qml.qrc
 
 check.commands = "xvfb-run -a dbus-test-runner -t ./signon-ui-unittest"
 QMAKE_EXTRA_TARGETS += check

@@ -40,6 +40,10 @@
 #include <QWebView>
 #include <SignOn/uisessiondata_priv.h>
 
+#ifdef USE_UBUNTU_PLATFORM_API
+#include <ubuntu/ui/ubuntu_ui_session_service.h>
+#endif
+
 using namespace SignOnUi;
 
 namespace SignOnUi {
@@ -372,6 +376,7 @@ void BrowserRequestPrivate::onFinished()
         reply[SSOUI_KEY_PASSWORD] = m_password;
 
     q->setResult(reply);
+    m_dialog->close();
 }
 
 void BrowserRequestPrivate::onContentsChanged()
@@ -392,6 +397,11 @@ void BrowserRequestPrivate::onContentsChanged()
 void BrowserRequestPrivate::showDialog()
 {
     m_dialog->show();
+#ifdef USE_UBUNTU_PLATFORM_API
+    qDebug ("Using ubuntu platform api");
+    ubuntu_ui_session_trigger_switch_to_well_known_application(UNKNOWN_APP);
+#endif
+
 }
 
 BrowserRequest::BrowserRequest(const QDBusConnection &connection,

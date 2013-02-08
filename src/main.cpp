@@ -29,6 +29,7 @@
 #include <QProcessEnvironment>
 #include <QSettings>
 
+
 using namespace SignOnUi;
 
 /* This is where signond expects to find us */
@@ -39,7 +40,6 @@ int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
     app.setApplicationName("signon-ui");
-    app.setQuitOnLastWindowClosed(false);
 
     /* read environment variables */
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
@@ -76,7 +76,10 @@ int main(int argc, char **argv)
 
     Service *service = new Service();
     if (daemonTimeout > 0)
+    {
         service->setTimeout(daemonTimeout);
+        app.setQuitOnLastWindowClosed(false);
+    }
     QDBusConnection connection = QDBusConnection::sessionBus();
     connection.registerService(QLatin1String(serviceName));
     connection.registerObject(QLatin1String(objectPath),

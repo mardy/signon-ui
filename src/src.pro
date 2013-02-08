@@ -66,7 +66,12 @@ lessThan(QT_MAJOR_VERSION, 5) {
 
 DEFINES += \
     DEBUG_ENABLED \
+    USE_UBUNTU_PLATFORM_API \
     I18N_DOMAIN=\\\"$${I18N_DOMAIN}\\\"
+
+contains(DEFINES, USE_UBUNTU_PLATFORM_API) {
+    LIBS += -lubuntu_application_api
+}
 
 RESOURCES += animationlabel.qrc
 
@@ -89,6 +94,11 @@ service.files = \
     com.canonical.indicators.webcredentials.service \
     com.nokia.singlesignonui.service
 INSTALLS += service
+
+desktop.path = $${INSTALL_PREFIX}/share/applications
+desktop.files += signon-ui.desktop
+
+INSTALLS += desktop
 
 OTHER_FILES += \
     webview.qml

@@ -1,4 +1,10 @@
-signon-ui (0.13-0ubuntu2~quantal6~build1) UNRELEASED; urgency=low
+signon-ui (0.13-0ubuntu2~quantal7) UNRELEASED; urgency=low
+
+  * dropped ubuntu-platform-api
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 09 Apr 2013 09:26:45 -0400
+
+signon-ui (0.13-0ubuntu2~quantal6) quantal; urgency=low
 
   * Build fixes for Qt5
   * debian/rules
@@ -6,7 +12,7 @@ signon-ui (0.13-0ubuntu2~quantal6~build1) UNRELEASED; urgency=low
   * debian/control
     - build depend on libubuntu-platform-api1-dev
 
- -- Ken VanDine <ken.vandine@canonical.com>  Wed, 06 Feb 2013 10:02:05 -0500
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 09 Apr 2013 09:26:16 -0400
 
 signon-ui (0.13-0ubuntu2~quantal5) quantal; urgency=low
 

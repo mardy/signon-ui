@@ -26,7 +26,6 @@ Build-Depends: debhelper (>= 9),
                libqt5opengl5-dev,
                qtsensors5-dev,
                qtlocation5-dev,
-               libubuntu-platform-api1-dev,
 Standards-Version: 3.9.3
 Homepage: https://launchpad.net/online-accounts-signon-ui
 

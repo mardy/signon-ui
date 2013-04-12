@@ -40,8 +40,7 @@ HEADERS = \
     network-access-manager.h \
     reauthenticator.h \
     request.h \
-    service.h \
-    webcredentials_interface.h
+    service.h
 
 SOURCES = \
     animation-label.cpp \

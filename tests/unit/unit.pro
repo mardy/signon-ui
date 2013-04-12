@@ -74,10 +74,6 @@ DEFINES += \
     DEBUG_ENABLED \
     UNIT_TESTS
 
-contains(DEFINES, USE_UBUNTU_PLATFORM_API) {
-    LIBS += -lubuntu_application_api
-}
-
 RESOURCES += $$TOP_SRC_DIR/src/animationlabel.qrc
 RESOURCES += $$TOP_SRC_DIR/src/qml.qrc
 

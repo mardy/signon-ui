@@ -68,10 +68,6 @@ DEFINES += \
     DEBUG_ENABLED \
     I18N_DOMAIN=\\\"$${I18N_DOMAIN}\\\"
 
-contains(DEFINES, USE_UBUNTU_PLATFORM_API) {
-    LIBS += -lubuntu_application_api
-}
-
 RESOURCES += animationlabel.qrc
 
 SIGNONUI_DBUS_ADAPTORS += \

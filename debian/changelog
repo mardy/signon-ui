@@ -1,3 +1,9 @@
+signon-ui (0.14~-0ubuntu1) UNRELEASED; urgency=low
+
+  * Automatic snapshot from revision 79 (bootstrap)
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 19 Mar 2013 12:18:12 -0400
+
 signon-ui (0.13+webview1-0quantal1) quantal; urgency=low
 
   * Added KeyboardRectangle to the WebView, this ensures the keyboard 

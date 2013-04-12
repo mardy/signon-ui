@@ -100,7 +100,9 @@ desktop.files += signon-ui.desktop
 INSTALLS += desktop
 
 OTHER_FILES += \
-    webview.qml
+    webview.qml \
+    KeyboardRectangle.qml \
+    StandardAnimation.qml
 
 RESOURCES += \
     qml.qrc

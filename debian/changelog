@@ -1,6 +1,7 @@
-signon-ui (0.13-0ubuntu2~quantal7) UNRELEASED; urgency=low
+signon-ui (0.13-0ubuntu2~quantal7) quantal; urgency=low
 
-  * dropped ubuntu-platform-api
+  * Added KeyboardRectangle to the WebView, this ensures the keyboard 
+    keeps focus when it's needed.
 
  -- Ken VanDine <ken.vandine@canonical.com>  Tue, 09 Apr 2013 09:26:45 -0400
 
@@ -9,8 +10,6 @@ signon-ui (0.13-0ubuntu2~quantal6) quantal; urgency=low
   * Build fixes for Qt5
   * debian/rules
     - disable tests
-  * debian/control
-    - build depend on libubuntu-platform-api1-dev
 
  -- Ken VanDine <ken.vandine@canonical.com>  Tue, 09 Apr 2013 09:26:16 -0400
 

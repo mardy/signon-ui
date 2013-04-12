@@ -1,4 +1,4 @@
-signon-ui (0.13-0ubuntu2~quantal7) quantal; urgency=low
+signon-ui (0.13+webview1-0quantal1) quantal; urgency=low
 
   * Added KeyboardRectangle to the WebView, this ensures the keyboard 
     keeps focus when it's needed.

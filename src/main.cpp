@@ -21,7 +21,6 @@
 #include "debug.h"
 #include "i18n.h"
 #include "inactivity-timer.h"
-#include "indicator-service.h"
 #include "my-network-proxy-factory.h"
 #include "service.h"
 
@@ -82,25 +81,15 @@ int main(int argc, char **argv)
                               service,
                               QDBusConnection::ExportAllContents);
 
-    IndicatorService *indicatorService = new IndicatorService();
-    connection.registerService(QLatin1String(WEBCREDENTIALS_BUS_NAME));
-    connection.registerObject(QLatin1String(WEBCREDENTIALS_OBJECT_PATH),
-                              indicatorService->serviceObject());
-
     InactivityTimer *inactivityTimer = 0;
     if (daemonTimeout > 0) {
         inactivityTimer = new InactivityTimer(daemonTimeout * 1000);
         inactivityTimer->watchObject(service);
-        inactivityTimer->watchObject(indicatorService);
         QObject::connect(inactivityTimer, SIGNAL(timeout()),
                          &app, SLOT(quit()));
     }
 
     int ret = app.exec();
-
-    connection.unregisterService(QLatin1String(WEBCREDENTIALS_BUS_NAME));
-    connection.unregisterObject(QLatin1String(WEBCREDENTIALS_OBJECT_PATH));
-    delete indicatorService;
 
     connection.unregisterService(QLatin1String(serviceName));
     connection.unregisterObject(QLatin1String(objectPath));

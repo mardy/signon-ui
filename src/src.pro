@@ -37,7 +37,6 @@ HEADERS = \
     errors.h \
     i18n.h \
     inactivity-timer.h \
-    indicator-service.h \
     network-access-manager.h \
     reauthenticator.h \
     request.h \
@@ -52,14 +51,12 @@ SOURCES = \
     dialog.cpp \
     i18n.cpp \
     inactivity-timer.cpp \
-    indicator-service.cpp \
     main.cpp \
     my-network-proxy-factory.cpp \
     network-access-manager.cpp \
     reauthenticator.cpp \
     request.cpp \
-    service.cpp \
-    webcredentials_interface.cpp
+    service.cpp
 
 lessThan(QT_MAJOR_VERSION, 5) {
     HEADERS += embed-manager.h
@@ -72,11 +69,6 @@ DEFINES += \
 
 RESOURCES += animationlabel.qrc
 
-SIGNONUI_DBUS_ADAPTORS += \
-    com.canonical.indicators.webcredentials.xml
-SIGNONUI_DBUS_INCLUDES += \
-    indicator-service.h
-
 include(signonui_dbus_adaptor.pri)
 
 po.target = ../po/signon-ui.pot
@@ -88,7 +80,6 @@ QMAKE_EXTRA_TARGETS += \
 
 service.path = $${INSTALL_PREFIX}/share/dbus-1/services
 service.files = \
-    com.canonical.indicators.webcredentials.service \
     com.nokia.singlesignonui.service
 INSTALLS += service
 

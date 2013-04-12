@@ -29,7 +29,6 @@ PKGCONFIG += \
 SOURCES += \
     fake-libnotify.cpp \
     fake-libsignon.cpp \
-    fake-webcredentials-interface.cpp \
     test.cpp \
     $$TOP_SRC_DIR/src/animation-label.cpp \
     $$TOP_SRC_DIR/src/browser-request.cpp \
@@ -37,25 +36,20 @@ SOURCES += \
     $$TOP_SRC_DIR/src/debug.cpp \
     $$TOP_SRC_DIR/src/dialog.cpp \
     $$TOP_SRC_DIR/src/i18n.cpp \
-    $$TOP_SRC_DIR/src/indicator-service.cpp \
     $$TOP_SRC_DIR/src/network-access-manager.cpp \
     $$TOP_SRC_DIR/src/reauthenticator.cpp \
-    $$TOP_SRC_DIR/src/request.cpp \
-    $$TOP_SRC_DIR/src/webcredentials_adaptor.cpp
+    $$TOP_SRC_DIR/src/request.cpp
 HEADERS += \
     fake-libnotify.h \
-    fake-webcredentials-interface.h \
     test.h \
     $$TOP_SRC_DIR/src/animation-label.h \
     $$TOP_SRC_DIR/src/browser-request.h \
     $$TOP_SRC_DIR/src/debug.h \
     $$TOP_SRC_DIR/src/cookie-jar-manager.h \
     $$TOP_SRC_DIR/src/dialog.h \
-    $$TOP_SRC_DIR/src/indicator-service.h \
     $$TOP_SRC_DIR/src/network-access-manager.h \
     $$TOP_SRC_DIR/src/reauthenticator.h \
-    $$TOP_SRC_DIR/src/request.h \
-    $$TOP_SRC_DIR/src/webcredentials_adaptor.h
+    $$TOP_SRC_DIR/src/request.h
 
 lessThan(QT_MAJOR_VERSION, 5) {
     SOURCES += $$TOP_SRC_DIR/src/embed-manager.cpp

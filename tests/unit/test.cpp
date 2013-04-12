@@ -20,11 +20,9 @@
 
 #include "debug.h"
 #include "fake-libnotify.h"
-#include "indicator-service.h"
 #include "test.h"
 #include "reauthenticator.h"
 #include "request.h"
-#include "fake-webcredentials-interface.h"
 
 #include <Accounts/Manager>
 #include <QDebug>
@@ -81,57 +79,6 @@ void SignOnUiTest::testRequestObjects()
     QCOMPARE(request->isInProgress(), false);
     QCOMPARE(request->metaObject()->className(), "SignOnUi::BrowserRequest");
     delete request;
-}
-
-void SignOnUiTest::testRequestWithIndicator()
-{
-    const uint signonId = 1234;
-    const QString displayName = QLatin1String("Beautiful account");
-
-    /* create an account claiming to use our fake signon-id */
-    Accounts::Manager *manager = new Accounts::Manager(this);
-    /* first, create a couple of dummy accounts */
-    Accounts::Account *account = manager->createAccount(0);
-    account->setEnabled(true);
-    account->syncAndBlock();
-    account = manager->createAccount(0);
-    account->setValue("CredentialsId", 0xdeadbeef);
-    account->setEnabled(true);
-    account->syncAndBlock();
-    /* now create the "good" account */
-    account = manager->createAccount(0);
-    account->setValue("CredentialsId", signonId);
-    account->setEnabled(true);
-    account->setDisplayName(displayName);
-    account->syncAndBlock();
-
-    /* now create a request */
-    QVariantMap parameters;
-    parameters[SSOUI_KEY_QUERYPASSWORD] = true;
-    parameters[SSOUI_KEY_IDENTITY] = signonId;
-    parameters[SSOUI_KEY_OPENURL] = "http://localhost:9999/page404.html";
-
-    Request *request = Request::newRequest(m_dbusConnection,
-                                           m_dbusMessage,
-                                           parameters,
-                                           this);
-    QVERIFY(request != 0);
-    QCOMPARE(request->isInProgress(), false);
-
-    QSignalSpy requestCompleted(request, SIGNAL(completed()));
-
-    request->start();
-    QCOMPARE(requestCompleted.count(), 1);
-
-    ComCanonicalIndicatorsWebcredentialsInterface *indicator =
-        ComCanonicalIndicatorsWebcredentialsInterface::instance();
-    QVERIFY(indicator != 0);
-    QCOMPARE(indicator->m_reportFailureCalled, true);
-    QCOMPARE(indicator->m_account_id, account->id());
-    QCOMPARE(indicator->m_notification["DisplayName"].toString(), displayName);
-
-    delete request;
-    delete manager;
 }
 
 static void prepareAuthData(AuthData &authData, int identity)
@@ -198,62 +145,6 @@ void SignOnUiTest::testReauthenticator()
     QCOMPARE(arguments.at(0).toBool(), true);
 
     delete reauthenticator;
-}
-
-void SignOnUiTest::testIndicatorService()
-{
-    const uint firstFailure = 413;
-
-    QVERIFY(IndicatorService::instance() == 0);
-
-    IndicatorService *service = new IndicatorService();
-    QVERIFY(service != 0);
-    QCOMPARE(IndicatorService::instance(), service);
-    QVERIFY(service->serviceObject() != 0);
-
-    // Check initial status
-    QVERIFY(service->failures().isEmpty());
-    QCOMPARE(service->errorStatus(), false);
-
-    // Report the first failure
-    service->reportFailure(firstFailure, QVariantMap());
-    QCOMPARE(FakeLibNotify::notificationCount(), 1);
-    QCOMPARE(service->errorStatus(), true);
-    QCOMPARE(service->failures().count(), 1);
-    QVERIFY(service->failures().contains(firstFailure));
-
-    // Report more failures
-    QList<uint> moreFailures;
-    moreFailures << 89 << 412 << 1 << 4 << 144;
-    foreach (uint id, moreFailures) {
-        service->reportFailure(id, QVariantMap());
-    }
-    QCOMPARE(FakeLibNotify::notificationCount(), 1);
-    QCOMPARE(service->errorStatus(), true);
-    QCOMPARE(service->failures().count(), 1 + moreFailures.count());
-
-    // Remove some failures
-    QSet<uint> removedFailures;
-    removedFailures << 4 << firstFailure << 89;
-    service->removeFailures(removedFailures);
-    QSet<uint> remainingFailures;
-    remainingFailures << 412 << 1 << 144;
-    QCOMPARE(FakeLibNotify::notificationCount(), 1);
-    QCOMPARE(service->errorStatus(), true);
-    QCOMPARE(service->failures(), remainingFailures);
-
-    // Clear the error status
-    service->clearErrorStatus();
-    QCOMPARE(service->errorStatus(), false);
-    QCOMPARE(service->failures(), remainingFailures);
-
-    // Send one more failure
-    service->reportFailure(3, QVariantMap());
-    QCOMPARE(FakeLibNotify::notificationCount(), 2);
-    QCOMPARE(service->errorStatus(), true);
-
-    delete service;
-    QVERIFY(IndicatorService::instance() == 0);
 }
 
 QTEST_MAIN(SignOnUiTest);

@@ -35,10 +35,8 @@ public:
 private Q_SLOTS:
     void initTestCase();
     void testRequestObjects();
-    void testRequestWithIndicator();
 
     void testReauthenticator();
-    void testIndicatorService();
 
 private:
     QDBusConnection m_dbusConnection;

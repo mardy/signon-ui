@@ -27,10 +27,15 @@
 #include "embed-manager.h"
 #endif
 #include "errors.h"
+#include "indicator-service.h"
+#ifndef UNIT_TESTS
+#include "webcredentials_interface.h"
+#else
+#include "fake-webcredentials-interface.h"
+#endif
 
 #include <Accounts/Account>
 #include <Accounts/Manager>
-#include <QtDBus>
 #include <QApplication>
 #include <QDBusArgument>
 #include <QVBoxLayout>
@@ -42,6 +47,7 @@
 #include <X11/Xlib.h>
 
 using namespace SignOnUi;
+using namespace com::canonical;
 
 namespace SignOnUi {
 
@@ -69,10 +75,13 @@ private Q_SLOTS:
 #if HAS_XEMBED
     void onEmbedError();
 #endif
+    void onIndicatorCallFinished(QDBusPendingCallWatcher *watcher);
 
 private:
     void setWidget(QWidget *widget);
     Accounts::Account *findAccount();
+    bool dispatchToIndicator();
+    void onIndicatorCallSucceeded();
 
 private:
     mutable Request *q_ptr;
@@ -142,6 +151,12 @@ void RequestPrivate::setWidget(QWidget *widget)
     }
 #endif
 
+    /* If the window has no parent and the webcredentials indicator service is
+     * up, dispatch the request to it. */
+    if (windowId() == 0 && dispatchToIndicator()) {
+        return;
+    }
+
     widget->setWindowModality(Qt::WindowModal);
     widget->show();
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -195,6 +210,73 @@ Accounts::Account *RequestPrivate::findAccount()
 
     // Not found
     return 0;
+}
+
+bool RequestPrivate::dispatchToIndicator()
+{
+    Q_Q(Request);
+
+    Accounts::Account *account = findAccount();
+    if (account == 0) {
+        return false;
+    }
+
+    QVariantMap notification;
+    notification["DisplayName"] = account->displayName();
+    notification["ClientData"] = m_clientData;
+    notification["Identity"] = q->identity();
+    notification["Method"] = q->method();
+    notification["Mechanism"] = q->mechanism();
+
+    indicators::webcredentials *webcredentialsIf =
+        new indicators::webcredentials(WEBCREDENTIALS_BUS_NAME,
+                                       WEBCREDENTIALS_OBJECT_PATH,
+                                       m_connection, this);
+    QDBusPendingReply<> reply =
+        webcredentialsIf->ReportFailure(account->id(), notification);
+    if (reply.isFinished()) {
+        if (reply.isError() &&
+            /* if this is a fake D-Bus interface, we get the
+             * "Disconnected" error. */
+            reply.error().type() != QDBusError::Disconnected) {
+            BLAME() << "Error dispatching to indicator:" <<
+                reply.error().message();
+            return false;
+        } else {
+            onIndicatorCallSucceeded();
+            return true;
+        }
+    }
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, this);
+    QObject::connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this,
+                     SLOT(onIndicatorCallFinished(QDBusPendingCallWatcher*)));
+
+    return true;
+}
+
+void RequestPrivate::onIndicatorCallFinished(QDBusPendingCallWatcher *watcher)
+{
+    if (watcher->isError()) {
+        /* if the notification could not be delivered to the indicator, show
+         * the widget. */
+        if (m_widget != 0)
+            m_widget->show();
+    } else {
+        onIndicatorCallSucceeded();
+    }
+}
+
+void RequestPrivate::onIndicatorCallSucceeded()
+{
+    Q_Q(Request);
+
+    /* the account has been reported as failing. We can now close this
+     * request, and tell the application that UI interaction is forbidden.
+     */
+    QVariantMap result;
+    result[SSOUI_KEY_ERROR] = SignOn::QUERY_ERROR_FORBIDDEN;
+    q->setResult(result);
 }
 
 Request *Request::newRequest(const QDBusConnection &connection,

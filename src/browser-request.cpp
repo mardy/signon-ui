@@ -30,6 +30,7 @@
 #include <QLabel>
 #include <QNetworkCookie>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QQmlContext>
@@ -249,7 +250,10 @@ private:
 
 private:
     mutable BrowserRequest *q_ptr;
-    Dialog *m_dialog;
+    /* The dialog can be deleted by the Request class, if it's set as children
+     * of an embedded widget which is then deleted. Therefore, in order to
+     * avoid a double deletion, guard the pointer with a QPointer. */
+    QPointer<Dialog> m_dialog;
     QUrl m_currentUrl;
     QUrl m_startUrl;
     QUrl m_finalUrl;

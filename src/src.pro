@@ -9,8 +9,3 @@ CONFIG(no-widgets) {
     }
     SUBDIRS += browser-process
 }
-
-desktop.path = $${INSTALL_PREFIX}/share/applications
-desktop.files += signon-ui.desktop
-
-INSTALLS += desktop

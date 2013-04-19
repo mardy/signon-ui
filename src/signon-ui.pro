@@ -112,3 +112,8 @@ service.files = \
     com.canonical.indicators.webcredentials.service \
     com.nokia.singlesignonui.service
 INSTALLS += service
+
+desktop.path = $${INSTALL_PREFIX}/share/applications
+desktop.files += signon-ui.desktop
+
+INSTALLS += desktop

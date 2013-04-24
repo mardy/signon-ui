@@ -1,4 +1,10 @@
-signon-ui (0.14-0ubuntu2~phablet1) UNRELEASED; urgency=low
+signon-ui (0.14-0ubuntu2~phablet2) raring; urgency=low
+
+  * Updated build deps for Qt5
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 24 Apr 2013 12:02:34 -0400
+
+signon-ui (0.14-0ubuntu2~phablet1) raring; urgency=low
 
   * Fix a crash potentially happening when the XEmbed container reused the 
     same X window ID from a previous one.

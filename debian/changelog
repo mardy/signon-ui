@@ -1,3 +1,11 @@
+signon-ui (0.14-0ubuntu2~phablet4) raring; urgency=low
+
+  * debian/rules
+    - disable tests because of the qemu crash (qemu: uncaught target signal 11)
+      we get when building for armhf with qemu, the tests pass on real hardware.
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 24 Apr 2013 14:33:22 -0400
+
 signon-ui (0.14-0ubuntu2~phablet3) raring; urgency=low
 
   * build depend on qt5-default

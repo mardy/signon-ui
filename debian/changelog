@@ -1,4 +1,4 @@
-signon-ui (0.14-0ubuntu2) UNRELEASED; urgency=low
+signon-ui (0.14+touch1-0raring1) raring; urgency=low
 
   [ Alberto Mardegan ]
   * Fix a crash potentially happening when the XEmbed container reused the 
@@ -8,8 +8,10 @@ signon-ui (0.14-0ubuntu2) UNRELEASED; urgency=low
   [ Ken VanDine ]
   * debian/control
     - Updated build depends
+  * debian/rules
+    - build with no-widgets for touch
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 05 Apr 2013 18:24:38 +0300
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 01 May 2013 15:22:26 -0700
 
 signon-ui (0.14-0ubuntu1) raring; urgency=low
 

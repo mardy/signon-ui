@@ -4,9 +4,14 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 export DPKG_GENSYMBOLS_CHECK_LEVEL=4
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 override_dh_auto_configure:
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), "armhf"))
+	dh_auto_configure -- "CONFIG+=no-widgets"
+else
 	dh_auto_configure -- "CONFIG+=force-foreign-qwindow"
+endif
 
 override_dh_install:
 	rm -f debian/*/usr/bin/signon-ui-unittest

@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Window 2.0
-import Ubuntu.Components.Extras.Browser 1.0
+import QtWebKit 3.0
+import Ubuntu.Components.Extras.Browser 0.1
 
 FocusScope {
     id: browser

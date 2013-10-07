@@ -1,8 +1,10 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+  <file>ua-overrides.js</file>
   <file>webview.qml</file>
   <file>KeyboardRectangle.qml</file>
   <file>StandardAnimation.qml</file>
+  <file>UserAgent.qml</file>
 </qresource>
 </RCC>
 

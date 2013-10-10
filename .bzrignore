@@ -26,6 +26,7 @@ src/com.canonical.indicators.webcredentials.service
 src/com.nokia.singlesignonui.service
 src/signon-ui
 src/signon_ui_adaptor.*
+src/signon-ui.desktop
 src/webcredentials_adaptor.*
 tests/unit/signon-ui-unittest
 tests/unit/tst_inactivity_timer

@@ -1,3 +1,3 @@
 [D-BUS Service]
 Name=com.nokia.singlesignonui
-Exec=$${INSTALL_PREFIX}/bin/signon-ui
+Exec=$${INSTALL_PREFIX}/bin/signon-ui --desktop_file_hint=$${INSTALL_PREFIX}/share/applications/signon-ui.desktop

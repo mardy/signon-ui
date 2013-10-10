@@ -116,13 +116,18 @@ QMAKE_EXTRA_TARGETS += \
 
 QMAKE_SUBSTITUTES += \
     com.canonical.indicators.webcredentials.service.in \
-    com.nokia.singlesignonui.service.in
+    com.nokia.singlesignonui.service.in \
+    signon-ui.desktop.in
 
 service.path = $${INSTALL_PREFIX}/share/dbus-1/services
 service.files = \
     com.canonical.indicators.webcredentials.service \
     com.nokia.singlesignonui.service
 INSTALLS += service
+
+desktop.path = $${INSTALL_PREFIX}/share/applications
+desktop.files += signon-ui.desktop
+INSTALLS += desktop
 
 # Help file for HTTP authentication warning
 !isEmpty(HTTP_WARNING_HELP) {

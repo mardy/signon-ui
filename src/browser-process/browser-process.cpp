@@ -28,6 +28,9 @@
 #include <QQmlContext>
 #include <SignOn/uisessiondata_priv.h>
 #include <stdio.h>
+#include <QDir>
+#include <QFile>
+#include <QTimer>
 
 using namespace SignOnUi;
 
@@ -37,6 +40,7 @@ class BrowserProcessPrivate: public QObject
 {
     Q_OBJECT
     Q_DECLARE_PUBLIC(BrowserProcess)
+    Q_PROPERTY(QUrl pageComponentUrl READ pageComponentUrl CONSTANT)
     Q_PROPERTY(QUrl currentUrl READ currentUrl WRITE setCurrentUrl)
     Q_PROPERTY(QUrl startUrl READ startUrl CONSTANT)
     Q_PROPERTY(QUrl finalUrl READ finalUrl CONSTANT)
@@ -48,6 +52,7 @@ public:
     void processClientRequest();
 
     void setCurrentUrl(const QUrl &url);
+    QUrl pageComponentUrl() const;
     QUrl currentUrl() const { return m_currentUrl; }
     QUrl startUrl() const { return m_startUrl; }
     QUrl finalUrl() const { return m_finalUrl; }
@@ -61,11 +66,13 @@ public:
 
 
 public Q_SLOTS:
+    void onLoadStarted();
     void onLoadFinished(bool ok);
+    void cancel();
 
 private Q_SLOTS:
     void start(const QVariantMap &params);
-    void cancel();
+    void onFailTimer();
     void onFinished();
 
 private:
@@ -82,6 +89,7 @@ private:
     QFile m_input;
     QFile m_output;
     RemoteRequestServer m_server;
+    QTimer m_failTimer;
     mutable BrowserProcess *q_ptr;
 };
 
@@ -92,11 +100,32 @@ BrowserProcessPrivate::BrowserProcessPrivate(BrowserProcess *process):
     m_dialog(0),
     q_ptr(process)
 {
+    m_failTimer.setSingleShot(true);
+    m_failTimer.setInterval(3000);
+    QObject::connect(&m_failTimer, SIGNAL(timeout()),
+                     this, SLOT(onFailTimer()));
 }
 
 BrowserProcessPrivate::~BrowserProcessPrivate()
 {
     delete m_dialog;
+}
+
+QUrl BrowserProcessPrivate::pageComponentUrl() const
+{
+    /* We define the X-PageComponent key to let the clients override the QML
+     * component to be used to build the authentication page.
+     * To prevent a malicious client to show it's own UI, we require that the
+     * file path begins with "/usr/share/signon-ui/" (where Ubuntu click
+     * packages cannot install files).
+     */
+    QUrl providedUrl = m_clientData.value("X-PageComponent").toString();
+    if (providedUrl.isValid() && providedUrl.isLocalFile() &&
+        providedUrl.path().startsWith("/usr/share/signon-ui/")) {
+        return providedUrl;
+    } else {
+        return QStringLiteral("DefaultPage.qml");
+    }
 }
 
 void BrowserProcessPrivate::processClientRequest()
@@ -117,6 +146,7 @@ void BrowserProcessPrivate::processClientRequest()
 void BrowserProcessPrivate::setCurrentUrl(const QUrl &url)
 {
     TRACE() << "Url changed:" << url;
+    m_failTimer.stop();
 
     if (url.host() == m_finalUrl.host() &&
         url.path() == m_finalUrl.path()) {
@@ -132,9 +162,19 @@ void BrowserProcessPrivate::setCurrentUrl(const QUrl &url)
     }
 }
 
+void BrowserProcessPrivate::onLoadStarted()
+{
+    m_failTimer.stop();
+}
+
 void BrowserProcessPrivate::onLoadFinished(bool ok)
 {
     TRACE() << "Load finished" << ok;
+
+    if (!ok) {
+        m_failTimer.start();
+        return;
+    }
 
     if (!m_dialog->isVisible()) {
         if (m_responseUrl.isEmpty()) {
@@ -160,8 +200,17 @@ void BrowserProcessPrivate::start(const QVariantMap &params)
     QObject::connect(m_dialog, SIGNAL(finished(int)),
                      this, SLOT(onFinished()));
 
+    QUrl webview("qrc:/MainWindow.qml");
+    QDir qmlDir("/usr/share/signon-ui/qml");
+    if (qmlDir.exists())
+    {
+        QFileInfo qmlFile(qmlDir.absolutePath() + "/MainWindow.qml");
+        if (qmlFile.exists())
+            webview.setUrl(qmlFile.absoluteFilePath());
+    }
+
     m_dialog->rootContext()->setContextProperty("request", this);
-    m_dialog->setSource(QUrl("qrc:/webview.qml"));
+    m_dialog->setSource(webview);
 }
 
 void BrowserProcessPrivate::cancel()
@@ -170,6 +219,18 @@ void BrowserProcessPrivate::cancel()
 
     TRACE() << "Client requested to cancel";
     m_server.setCanceled();
+    if (m_dialog) {
+        m_dialog->close();
+    }
+    Q_EMIT q->finished();
+}
+
+void BrowserProcessPrivate::onFailTimer()
+{
+    Q_Q(BrowserProcess);
+
+    TRACE() << "Page loading failed";
+    m_server.setResult(QVariantMap());
     if (m_dialog) {
         m_dialog->close();
     }

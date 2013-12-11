@@ -1,23 +1,16 @@
 import QtQuick 2.0
-import QtQuick.Window 2.0
-import QtWebKit 3.0
+import QtWebKit 3.1
+import Ubuntu.Components 0.1
 import Ubuntu.Components.Extras.Browser 0.1
 
 FocusScope {
     id: browser
-    width: 400
-    height: 300
+    anchors.fill: parent
     focus: true
-    property string qtwebkitdpr: "1.0"
 
     UbuntuWebView {
         id: webView
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: osk.top
-        }
+        anchors.fill: parent
         focus: true
 
         Component.onCompleted: url = request.startUrl
@@ -26,12 +19,12 @@ FocusScope {
             console.log("Loading changed")
             if (loadRequest.status === WebView.LoadSucceededStatus) {
                 request.onLoadFinished(true)
+            } else if (loadRequest.status === WebView.LoadFailedStatus) {
+                request.onLoadFinished(false)
+            } else if (loadRequest.status === WebView.LoadStarted) {
+                request.onLoadStarted()
             }
         }
         onUrlChanged: request.currentUrl = url
-    }
-
-    KeyboardRectangle {
-        id: osk
     }
 }

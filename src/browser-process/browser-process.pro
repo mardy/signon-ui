@@ -4,7 +4,7 @@ include($${TOP_SRC_DIR}/common-vars.pri)
 TEMPLATE = app
 TARGET = browser-process
 
-target.path = $${INSTALL_PREFIX}/libexec/signon-ui
+target.path = $${LIBEXECDIR}/signon-ui
 INSTALLS += target
 
 I18N_DOMAIN = signon-ui
@@ -45,9 +45,13 @@ CONFIG(force-foreign-qwindow) {
 }
 
 OTHER_FILES += \
-    webview.qml \
+    DefaultPage.qml \
     KeyboardRectangle.qml \
-    StandardAnimation.qml
+    MainWindow.qml \
+    StandardAnimation.qml \
+    UserAgent.qml \
+    WebView.qml \
+    ua-overrides.js
 
 RESOURCES += \
     qml.qrc

@@ -1,3 +1,11 @@
+signon-ui (0.17-0ubuntu1) UNRELEASED; urgency=medium
+
+  * Add an experimental method to get the WebView cookies This is
+    intended to be used by the webapps container, in the attempt to
+    reduce the number of web logins required to the user.
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 19 Mar 2014 14:35:59 +0200
+
 signon-ui (0.16+14.04.20140304.is.0.15+14.04.20140313-0ubuntu1) trusty; urgency=low
 
   * New rebuild forced
